@@ -4,7 +4,7 @@ from app.config import DENSE_TOP_K, QDRANT_COLLECTION
 from app.ingestion.embedder import Embedder, get_embedder
 from app.ingestion.indexer import chunk_from_payload, get_qdrant_client
 from app.models.schemas import RetrievalFilters, RetrievedChunk
-from app.retrieval.filters import build_qdrant_filter
+from app.retrieval.filters import apply_section_filter, build_qdrant_filter, infer_filters, merge_filters
 
 
 class DenseRetriever:
@@ -27,18 +27,22 @@ class DenseRetriever:
         query: str,
         top_k: int | None = None,
         filters: RetrievalFilters | None = None,
+        infer: bool = False,
     ) -> list[RetrievedChunk]:
         limit = top_k or self._top_k
+        applied = merge_filters(filters, infer_filters(query)) if infer else filters
         vector = self._embedder.embed([query])[0]
+        fetch = limit * 3 if applied and applied.section else limit
         response = self._client.query_points(
             collection_name=self._collection,
             query=vector,
-            query_filter=build_qdrant_filter(filters),
-            limit=limit,
+            query_filter=build_qdrant_filter(applied),
+            limit=fetch,
             with_payload=True,
         )
         results: list[RetrievedChunk] = []
         for hit in response.points:
             chunk = chunk_from_payload(hit.payload or {})
             results.append(RetrievedChunk(**chunk.model_dump(), score=float(hit.score)))
-        return results
+        section = applied.section if applied else None
+        return apply_section_filter(results, section)[:limit]

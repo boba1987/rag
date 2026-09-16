@@ -22,8 +22,8 @@ _RC_PRICING = Chunk(
     content_type="provider",
     provider="RingCentral",
     title="RingCentral",
-    section="Pricing",
-    heading_path=["RingCentral", "Pricing"],
+    section="RingCentral Plans and Pricing",
+    heading_path=["RingCentral", "RingCentral Plans and Pricing"],
     text="RingEX starts at $20 per user.",
     source_url="http://localhost/review/ringcentral-2/",
     updated_at="2026-04-13 10:03:33",
@@ -146,3 +146,19 @@ def test_section_and_provider_filter() -> None:
     assert [chunk.section for chunk in results] == ["Pricing"]
     assert results[0].provider == "Nextiva"
     assert results[0].document_id == "8019"
+
+
+def test_infer_filters_from_ringcentral_pricing_query() -> None:
+    client = QdrantClient(":memory:")
+    embedder = _FixedEmbedder()
+    _index(client, embedder)
+    retriever = DenseRetriever(
+        embedder=embedder,
+        client=client,
+        collection="dense_test",
+        top_k=5,
+    )
+    results = retriever.search("How much does RingCentral cost?", infer=True)
+    assert results
+    assert {chunk.provider for chunk in results} == {"RingCentral"}
+    assert all("pricing" in chunk.section.lower() for chunk in results)
