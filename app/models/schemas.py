@@ -34,3 +34,15 @@ class NormalizedDocument(BaseModel):
     published_at: str | None = None
     updated_at: str | None = None
     sections: list[Section] = Field(default_factory=list)
+
+
+class Chunk(BaseModel):
+    id: str
+    document_id: str
+    content_type: ContentType
+    provider: str | None = None
+    title: str
+    section: str
+    heading_path: list[str] = Field(min_length=1)
+    text: str
+    source_url: str | None = None
