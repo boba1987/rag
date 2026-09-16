@@ -1,3 +1,3 @@
-from app.models.schemas import ContentType, NormalizedDocument, Section
+from app.models.schemas import ContentType, NormalizedDocument, RawPost, Section
 
-__all__ = ["ContentType", "NormalizedDocument", "Section"]
+__all__ = ["ContentType", "NormalizedDocument", "RawPost", "Section"]
