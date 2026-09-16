@@ -12,6 +12,7 @@ PROVIDERS_PATH = PROJECT_ROOT / "providers.json"
 
 NORMALIZED_DIR = PROJECT_ROOT / "documents" / "normalized"
 CHUNKED_DIR = PROJECT_ROOT / "documents" / "chunked"
+INDEXED_DIR = PROJECT_ROOT / "documents" / "indexed"
 
 TARGET_MIN_TOKENS = 300
 TARGET_MAX_TOKENS = 700
