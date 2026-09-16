@@ -87,6 +87,29 @@ def test_post_query_rejects_empty_query() -> None:
     assert response.status_code == 422
 
 
+def test_post_query_echoes_sparse_and_hybrid_strategy() -> None:
+    client = TestClient(create_app(retriever=_FakeRetriever(), generator=_FakeGenerator()))
+    for strategy in ("sparse", "hybrid"):
+        response = client.post(
+            "/query",
+            json={
+                "query": "Does RingCentral integrate with Salesforce?",
+                "strategy": strategy,
+            },
+        )
+        assert response.status_code == 200
+        assert response.json()["retrieval"]["strategy"] == strategy
+
+
+def test_post_query_rejects_unknown_strategy() -> None:
+    client = TestClient(create_app(retriever=_FakeRetriever(), generator=_FakeGenerator()))
+    response = client.post(
+        "/query",
+        json={"query": "Does RingCentral integrate with Salesforce?", "strategy": "rerank"},
+    )
+    assert response.status_code == 422
+
+
 def test_answer_query_with_no_hits_stays_dense() -> None:
     class _EmptyRetriever:
         def search(self, query: str, top_k: int | None = None, filters=None, infer: bool = False):

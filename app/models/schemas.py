@@ -3,6 +3,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 ContentType = Literal["article", "review", "provider"]
+RetrievalStrategy = Literal["dense", "sparse", "hybrid"]
 EvalCategory = Literal[
     "factual",
     "pricing",
@@ -88,10 +89,11 @@ class QueryRequest(BaseModel):
     query: str = Field(min_length=1)
     filters: RetrievalFilters | None = None
     infer: bool = True
+    strategy: RetrievalStrategy = "dense"
 
 
 class RetrievalInfo(BaseModel):
-    strategy: Literal["dense"] = "dense"
+    strategy: RetrievalStrategy = "dense"
     filters: RetrievalFilters | None = None
     inferred: bool = False
 
