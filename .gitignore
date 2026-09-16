@@ -1,0 +1,74 @@
+# Byte-compiled / optimized
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Packaging / build
+build/
+dist/
+*.egg-info/
+.eggs/
+*.egg
+
+# Test / type / lint caches
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE / editor
+.idea/
+.vscode/
+.cursor/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs and local scratch
+*.log
+logs/
+tmp/
+temp/
+documents/
+
+# RAG / ML artifacts
+chroma/
+.chroma/
+faiss_index/
+*.faiss
+*.index
+qdrant_storage/
+lancedb/
+*.lance
+embeddings/
+models/
+*.bin
+*.pt
+*.pth
+*.onnx
+*.gguf
+*.pkl
+*.pickle
