@@ -31,6 +31,7 @@ OPENAI_EMBED_DIMENSIONS = 1536
 QDRANT_URL = os.getenv("QDRANT_URL", "http://127.0.0.1:6333")
 QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "getvoip_chunks")
 DENSE_TOP_K = int(os.getenv("DENSE_TOP_K", "5"))
+RRF_K = int(os.getenv("RRF_K", "60"))
 
 # Rough list prices for experiment cost tracking, not invoices.
 OPENAI_EMBED_USD_PER_1M = float(os.getenv("OPENAI_EMBED_USD_PER_1M", "0.02"))
