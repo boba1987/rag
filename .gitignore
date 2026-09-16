@@ -64,7 +64,7 @@ qdrant_storage/
 lancedb/
 *.lance
 embeddings/
-models/
+/models/
 *.bin
 *.pt
 *.pth
