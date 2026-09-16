@@ -81,6 +81,13 @@ class QueryRequest(BaseModel):
     query: str = Field(min_length=1)
 
 
+class RetrievalFilters(BaseModel):
+    provider: str | None = None
+    section: str | None = None
+    content_type: ContentType | None = None
+    document_id: str | None = None
+
+
 class RetrievalInfo(BaseModel):
     strategy: Literal["dense"] = "dense"
 
