@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from app.api.query import answer_query
 from app.main import create_app
 from app.models.schemas import RetrievedChunk
 
@@ -49,3 +50,23 @@ def test_post_query_rejects_empty_query() -> None:
     client = TestClient(create_app(retriever=_FakeRetriever(), generator=_FakeGenerator()))
     response = client.post("/query", json={"query": ""})
     assert response.status_code == 422
+
+
+def test_answer_query_with_no_hits_stays_dense() -> None:
+    class _EmptyRetriever:
+        def search(self, query: str, top_k: int | None = None) -> list[RetrievedChunk]:
+            return []
+
+    class _RefuseGenerator:
+        def generate(self, question: str, context: str) -> str:
+            assert context == ""
+            return "I do not know."
+
+    result = answer_query(
+        "What is Zoom Phone's 2020 revenue?",
+        retriever=_EmptyRetriever(),
+        generator=_RefuseGenerator(),
+    )
+    assert result.answer == "I do not know."
+    assert result.sources == []
+    assert result.retrieval.strategy == "dense"
