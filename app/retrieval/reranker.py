@@ -2,8 +2,14 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from app.config import BGE_RERANKER_MODEL, CROSS_ENCODER_MODEL, RERANK_TOP_K, RERANKER_PROVIDER
-from app.models.schemas import RetrievedChunk
+from app.config import (
+    BGE_RERANKER_MODEL,
+    CROSS_ENCODER_MODEL,
+    RERANK_CANDIDATES,
+    RERANK_TOP_K,
+    RERANKER_PROVIDER,
+)
+from app.models.schemas import RetrievalFilters, RetrievedChunk
 
 
 class Reranker(ABC):
@@ -88,3 +94,34 @@ def get_reranker(provider: str | None = None) -> Reranker:
     if name == "bge":
         return BGEReranker()
     raise ValueError(f"Unknown reranker provider: {name}")
+
+
+class RerankRetriever:
+    """Hybrid retrieve a large pool, then rerank to top_k. Does not live in LangGraph."""
+
+    def __init__(
+        self,
+        retriever=None,
+        reranker: Reranker | None = None,
+        candidates: int = RERANK_CANDIDATES,
+        top_k: int = RERANK_TOP_K,
+    ) -> None:
+        from app.retrieval.hybrid import HybridRetriever
+
+        self._retriever = retriever if retriever is not None else HybridRetriever()
+        self._reranker = reranker if reranker is not None else get_reranker()
+        self._candidates = candidates
+        self._top_k = top_k
+
+    def search(
+        self,
+        query: str,
+        top_k: int | None = None,
+        filters: RetrievalFilters | None = None,
+        infer: bool = False,
+    ) -> list[RetrievedChunk]:
+        limit = top_k or self._top_k
+        pool = self._retriever.search(
+            query, top_k=self._candidates, filters=filters, infer=infer
+        )
+        return self._reranker.rerank(query, pool, top_k=limit)
