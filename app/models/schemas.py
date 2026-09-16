@@ -64,3 +64,17 @@ class Source(BaseModel):
 class GroundedAnswer(BaseModel):
     answer: str
     sources: list[Source] = Field(default_factory=list)
+
+
+class QueryRequest(BaseModel):
+    query: str = Field(min_length=1)
+
+
+class RetrievalInfo(BaseModel):
+    strategy: Literal["dense"] = "dense"
+
+
+class QueryResponse(BaseModel):
+    answer: str
+    sources: list[Source] = Field(default_factory=list)
+    retrieval: RetrievalInfo = Field(default_factory=RetrievalInfo)
