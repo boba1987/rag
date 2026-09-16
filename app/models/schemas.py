@@ -77,10 +77,6 @@ class GroundedAnswer(BaseModel):
     sources: list[Source] = Field(default_factory=list)
 
 
-class QueryRequest(BaseModel):
-    query: str = Field(min_length=1)
-
-
 class RetrievalFilters(BaseModel):
     provider: str | None = None
     section: str | None = None
@@ -88,8 +84,16 @@ class RetrievalFilters(BaseModel):
     document_id: str | None = None
 
 
+class QueryRequest(BaseModel):
+    query: str = Field(min_length=1)
+    filters: RetrievalFilters | None = None
+    infer: bool = True
+
+
 class RetrievalInfo(BaseModel):
     strategy: Literal["dense"] = "dense"
+    filters: RetrievalFilters | None = None
+    inferred: bool = False
 
 
 class QueryResponse(BaseModel):

@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Request
 
 from app.generation.generator import generate_grounded_answer, get_generator
-from app.models.schemas import QueryRequest, QueryResponse, RetrievalInfo
+from app.models.schemas import QueryRequest, QueryResponse, RetrievalFilters, RetrievalInfo
 from app.retrieval.dense import DenseRetriever
+from app.retrieval.filters import infer_filters, merge_filters
 
 router = APIRouter()
 
@@ -11,14 +12,17 @@ def answer_query(
     question: str,
     retriever: DenseRetriever | None = None,
     generator=None,
+    filters: RetrievalFilters | None = None,
+    infer: bool = True,
 ) -> QueryResponse:
     searcher = retriever or DenseRetriever()
-    chunks = searcher.search(question)
+    applied = merge_filters(filters, infer_filters(question) if infer else None)
+    chunks = searcher.search(question, filters=applied)
     grounded = generate_grounded_answer(question, chunks, generator=generator)
     return QueryResponse(
         answer=grounded.answer,
         sources=grounded.sources,
-        retrieval=RetrievalInfo(strategy="dense"),
+        retrieval=RetrievalInfo(strategy="dense", filters=applied, inferred=infer),
     )
 
 
@@ -30,4 +34,6 @@ def query(body: QueryRequest, request: Request) -> QueryResponse:
         body.query,
         retriever=retriever,
         generator=generator or get_generator(),
+        filters=body.filters,
+        infer=body.infer,
     )
