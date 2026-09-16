@@ -9,6 +9,7 @@ def _document(*sections: Section) -> NormalizedDocument:
         content_type="provider",
         provider="Nextiva",
         url="http://localhost/review/nextiva-2/",
+        updated_at="2026-09-02 06:31:16",
         sections=list(sections),
     )
 
@@ -25,6 +26,7 @@ def test_keeps_short_section_as_one_chunk() -> None:
     assert chunks[0].heading_path == ["Nextiva", "Pricing"]
     assert chunks[0].source_url == document.url
     assert chunks[0].document_id == "8019"
+    assert chunks[0].updated_at == "2026-09-02 06:31:16"
     assert chunks[1].section == "Support"
 
 

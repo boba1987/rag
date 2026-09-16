@@ -44,6 +44,7 @@ def chunk_payload(chunk: Chunk) -> dict:
         "heading_path": chunk.heading_path,
         "text": chunk.text,
         "source_url": chunk.source_url,
+        "updated_at": chunk.updated_at,
     }
 
 

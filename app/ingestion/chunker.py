@@ -131,6 +131,7 @@ class StructureAwareChunker(Chunker):
             heading_path=list(section.heading_path),
             text=text,
             source_url=document.url,
+            updated_at=document.updated_at,
         )
 
 

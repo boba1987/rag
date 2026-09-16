@@ -46,3 +46,4 @@ class Chunk(BaseModel):
     heading_path: list[str] = Field(min_length=1)
     text: str
     source_url: str | None = None
+    updated_at: str | None = None
