@@ -53,3 +53,14 @@ class RetrievedChunk(Chunk):
     """A stored chunk plus its dense similarity score."""
 
     score: float
+
+
+class Source(BaseModel):
+    title: str
+    section: str
+    url: str | None = None
+
+
+class GroundedAnswer(BaseModel):
+    answer: str
+    sources: list[Source] = Field(default_factory=list)

@@ -24,6 +24,7 @@ OPENAI_EMBED_MODEL = os.getenv("OPENAI_EMBED_MODEL", "text-embedding-3-small")
 OPENAI_CHAT_MODEL = os.getenv("OPENAI_CHAT_MODEL", "gpt-4.1-mini")
 
 EMBEDDER_PROVIDER = os.getenv("EMBEDDER", "openai")
+GENERATOR_PROVIDER = os.getenv("GENERATOR", "openai")
 OPENAI_EMBED_DIMENSIONS = 1536
 
 QDRANT_URL = os.getenv("QDRANT_URL", "http://127.0.0.1:6333")
