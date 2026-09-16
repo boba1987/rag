@@ -1,41 +1,73 @@
 import json
+from collections import Counter
 from pathlib import Path
 
 import pytest
 from pydantic import ValidationError
 
+from app.config import CHUNKED_DIR
 from app.evaluation.dataset import categories_present, load_eval_cases
-from app.models.schemas import EvalCase
+from app.models.schemas import EvalCase, EvalCategory
+
+_PLANNED_CATEGORIES: set[EvalCategory] = {
+    "factual",
+    "pricing",
+    "features",
+    "integrations",
+    "comparison",
+    "recommendation",
+    "multi-hop",
+    "ambiguous",
+    "unanswerable",
+}
 
 
-def test_loads_starter_golden_set() -> None:
+def _chunked_document_ids() -> set[str]:
+    ids: set[str] = set()
+    if not CHUNKED_DIR.exists():
+        return ids
+    for path in CHUNKED_DIR.glob("*.json"):
+        rows = json.loads(path.read_text(encoding="utf-8"))
+        if rows:
+            ids.add(rows[0]["document_id"])
+    return ids
+
+
+def test_loads_at_least_50_cases() -> None:
     cases = load_eval_cases()
-    assert len(cases) == 9
+    assert len(cases) >= 50
     assert cases[0].id == "eval_001"
     assert cases[0].question == "Does RingCentral integrate with Salesforce?"
-    assert cases[0].expected_documents == ["8015"]
-    assert cases[0].category == "factual"
 
 
-def test_starter_set_covers_every_planned_category() -> None:
+def test_covers_every_planned_category() -> None:
+    assert categories_present(load_eval_cases()) == _PLANNED_CATEGORIES
+
+
+def test_each_category_has_at_least_three_cases() -> None:
+    counts = Counter(case.category for case in load_eval_cases())
+    for category in _PLANNED_CATEGORIES:
+        assert counts[category] >= 3, f"{category} has {counts[category]}"
+
+
+def test_ids_and_questions_are_unique() -> None:
     cases = load_eval_cases()
-    assert categories_present(cases) == {
-        "factual",
-        "pricing",
-        "features",
-        "integrations",
-        "comparison",
-        "recommendation",
-        "multi-hop",
-        "ambiguous",
-        "unanswerable",
-    }
+    assert len({case.id for case in cases}) == len(cases)
+    assert len({case.question for case in cases}) == len(cases)
 
 
-def test_unanswerable_and_ambiguous_have_no_expected_documents() -> None:
-    cases = {case.category: case for case in load_eval_cases()}
-    assert cases["ambiguous"].expected_documents == []
-    assert cases["unanswerable"].expected_documents == []
+def test_expected_documents_exist_in_chunked_corpus() -> None:
+    known = _chunked_document_ids()
+    assert known, "documents/chunked is empty; run chunking first"
+    for case in load_eval_cases():
+        missing = set(case.expected_documents) - known
+        assert not missing, f"{case.id} references unknown documents: {missing}"
+
+
+def test_ambiguous_and_unanswerable_have_no_expected_documents() -> None:
+    for case in load_eval_cases():
+        if case.category in {"ambiguous", "unanswerable"}:
+            assert case.expected_documents == [], case.id
 
 
 def test_rejects_unknown_category() -> None:
