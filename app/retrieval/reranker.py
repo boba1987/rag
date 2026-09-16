@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-from app.config import CROSS_ENCODER_MODEL, RERANK_TOP_K, RERANKER_PROVIDER
+from app.config import BGE_RERANKER_MODEL, CROSS_ENCODER_MODEL, RERANK_TOP_K, RERANKER_PROVIDER
 from app.models.schemas import RetrievedChunk
 
 
 class Reranker(ABC):
-    """Reorder retrieved chunks. Cross-encoder now; BGE / ColBERT-style later."""
+    """Reorder retrieved chunks. Cross-encoder and BGE now; ColBERT-style later."""
 
     @abstractmethod
     def rerank(
@@ -69,18 +69,16 @@ class CrossEncoderReranker(Reranker):
         return self._model
 
 
-class BGEReranker(Reranker):
-    """Placeholder until Phase 8 commit 2."""
+class BGEReranker(CrossEncoderReranker):
+    """BGE pair scorer. Same rerank() contract; default model is BAAI/bge-reranker-base."""
 
-    def rerank(
+    def __init__(
         self,
-        query: str,
-        chunks: list[RetrievedChunk],
-        top_k: int | None = None,
-    ) -> list[RetrievedChunk]:
-        raise NotImplementedError(
-            "BGE reranker is not enabled yet. Use CrossEncoderReranker until commit 2."
-        )
+        predict=None,
+        model: str = BGE_RERANKER_MODEL,
+        top_k: int = RERANK_TOP_K,
+    ) -> None:
+        super().__init__(predict=predict, model=model, top_k=top_k)
 
 
 def get_reranker(provider: str | None = None) -> Reranker:

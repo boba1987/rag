@@ -39,6 +39,7 @@ CROSS_ENCODER_MODEL = os.getenv(
     "CROSS_ENCODER_MODEL",
     "cross-encoder/ms-marco-MiniLM-L-6-v2",
 )
+BGE_RERANKER_MODEL = os.getenv("BGE_RERANKER_MODEL", "BAAI/bge-reranker-base")
 
 # Rough list prices for experiment cost tracking, not invoices.
 OPENAI_EMBED_USD_PER_1M = float(os.getenv("OPENAI_EMBED_USD_PER_1M", "0.02"))

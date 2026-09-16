@@ -1,5 +1,6 @@
 import pytest
 
+from app.config import BGE_RERANKER_MODEL, CROSS_ENCODER_MODEL
 from app.models.schemas import RetrievedChunk
 from app.retrieval.reranker import BGEReranker, CrossEncoderReranker, get_reranker
 
@@ -50,13 +51,28 @@ def test_empty_candidates_return_empty() -> None:
     assert reranker.rerank("query", []) == []
 
 
-def test_bge_placeholder_is_not_implemented() -> None:
-    with pytest.raises(NotImplementedError, match="BGE reranker"):
-        BGEReranker().rerank("query", [_chunk("a", "alpha")])
+def test_bge_orders_by_pair_score() -> None:
+    chunks = [
+        _chunk("pricing", "RingEX starts at $20.", score=0.9),
+        _chunk("salesforce", "RingCentral supports Salesforce.", score=0.2),
+    ]
+
+    def predict(pairs: list[tuple[str, str]]) -> list[float]:
+        return [8.0 if "Salesforce" in text else 0.5 for _query, text in pairs]
+
+    reranker = BGEReranker(predict=predict, top_k=5)
+    ranked = reranker.rerank("Does RingCentral integrate with Salesforce?", chunks)
+    assert [chunk.id for chunk in ranked] == ["salesforce", "pricing"]
+    assert ranked[0].score == 8.0
 
 
-def test_get_reranker_selects_cross_encoder() -> None:
-    assert isinstance(get_reranker("cross-encoder"), CrossEncoderReranker)
+def test_get_reranker_selects_cross_encoder_and_bge() -> None:
+    cross = get_reranker("cross-encoder")
+    bge = get_reranker("bge")
+    assert isinstance(cross, CrossEncoderReranker)
+    assert isinstance(bge, BGEReranker)
+    assert cross._model_name == CROSS_ENCODER_MODEL
+    assert bge._model_name == BGE_RERANKER_MODEL
 
 
 def test_get_reranker_rejects_unknown() -> None:
