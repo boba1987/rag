@@ -1,4 +1,4 @@
-from app.ingestion.chunker import Chunker, StructureAwareChunker, count_tokens
+from app.ingestion.chunker import Chunker, StructureAwareChunker, count_tokens, write_chunks
 from app.ingestion.cleaner import clean_html
 from app.ingestion.loader import get_raw_post, load_all_raw_posts, load_raw_posts
 from app.ingestion.normalizer import normalize_post, write_normalized_document
@@ -15,5 +15,6 @@ __all__ = [
     "load_raw_posts",
     "normalize_post",
     "parse_blocks",
+    "write_chunks",
     "write_normalized_document",
 ]

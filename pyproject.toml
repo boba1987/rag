@@ -20,6 +20,7 @@ dev = [
 
 [project.scripts]
 rag-normalize = "app.ingestion.normalize:main"
+rag-chunk = "app.ingestion.chunk:main"
 
 [tool.setuptools.packages.find]
 include = ["app*"]
