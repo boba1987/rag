@@ -20,6 +20,8 @@ def retriever_for(strategy: RetrievalStrategy = "dense"):
         return SparseRetriever()
     if strategy == "hybrid":
         return HybridRetriever()
+    if strategy == "rerank":
+        return RerankRetriever()
     raise ValueError(f"Unknown retrieval strategy: {strategy}")
 
 

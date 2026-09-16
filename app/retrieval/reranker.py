@@ -106,9 +106,7 @@ class RerankRetriever:
         candidates: int = RERANK_CANDIDATES,
         top_k: int = RERANK_TOP_K,
     ) -> None:
-        from app.retrieval.hybrid import HybridRetriever
-
-        self._retriever = retriever if retriever is not None else HybridRetriever()
+        self._retriever = retriever
         self._reranker = reranker if reranker is not None else get_reranker()
         self._candidates = candidates
         self._top_k = top_k
@@ -121,7 +119,13 @@ class RerankRetriever:
         infer: bool = False,
     ) -> list[RetrievedChunk]:
         limit = top_k or self._top_k
-        pool = self._retriever.search(
+        searcher = self._retriever
+        if searcher is None:
+            from app.retrieval.hybrid import HybridRetriever
+
+            searcher = HybridRetriever()
+            self._retriever = searcher
+        pool = searcher.search(
             query, top_k=self._candidates, filters=filters, infer=infer
         )
         return self._reranker.rerank(query, pool, top_k=limit)

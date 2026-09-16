@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 ContentType = Literal["article", "review", "provider"]
-RetrievalStrategy = Literal["dense", "sparse", "hybrid"]
+RetrievalStrategy = Literal["dense", "sparse", "hybrid", "rerank"]
 EvalCategory = Literal[
     "factual",
     "pricing",
