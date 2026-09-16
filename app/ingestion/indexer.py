@@ -33,6 +33,21 @@ def ensure_collection(
     )
 
 
+def chunk_from_payload(payload: dict) -> Chunk:
+    return Chunk(
+        id=payload["chunk_id"],
+        document_id=payload["document_id"],
+        content_type=payload["content_type"],
+        provider=payload.get("provider"),
+        title=payload["title"],
+        section=payload["section"],
+        heading_path=list(payload.get("heading_path") or [payload["section"]]),
+        text=payload["text"],
+        source_url=payload.get("source_url"),
+        updated_at=payload.get("updated_at"),
+    )
+
+
 def chunk_payload(chunk: Chunk) -> dict:
     return {
         "chunk_id": chunk.id,

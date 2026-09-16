@@ -1,6 +1,6 @@
 from qdrant_client import QdrantClient
 
-from app.ingestion.indexer import chunk_payload, chunk_point_id, upsert_chunks
+from app.ingestion.indexer import chunk_from_payload, chunk_payload, chunk_point_id, upsert_chunks
 from app.models.schemas import Chunk
 
 _CHUNK = Chunk(
@@ -38,6 +38,10 @@ def test_payload_includes_planned_metadata() -> None:
         "source_url": "http://localhost/review/nextiva-2/",
         "updated_at": "2026-09-02 06:31:16",
     }
+
+
+def test_payload_roundtrip() -> None:
+    assert chunk_from_payload(chunk_payload(_CHUNK)) == _CHUNK
 
 
 def test_point_id_is_stable() -> None:

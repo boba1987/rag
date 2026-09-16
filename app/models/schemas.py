@@ -47,3 +47,9 @@ class Chunk(BaseModel):
     text: str
     source_url: str | None = None
     updated_at: str | None = None
+
+
+class RetrievedChunk(Chunk):
+    """A stored chunk plus its dense similarity score."""
+
+    score: float
