@@ -23,6 +23,9 @@ dev = [
     "pytest>=8.0",
     "httpx>=0.27",
 ]
+rerank = [
+    "sentence-transformers>=3.0",
+]
 
 [project.scripts]
 rag-normalize = "app.ingestion.normalize:main"
