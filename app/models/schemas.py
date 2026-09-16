@@ -3,6 +3,17 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 ContentType = Literal["article", "review", "provider"]
+EvalCategory = Literal[
+    "factual",
+    "pricing",
+    "features",
+    "integrations",
+    "comparison",
+    "recommendation",
+    "multi-hop",
+    "ambiguous",
+    "unanswerable",
+]
 
 
 class RawPost(BaseModel):
@@ -78,3 +89,11 @@ class QueryResponse(BaseModel):
     answer: str
     sources: list[Source] = Field(default_factory=list)
     retrieval: RetrievalInfo = Field(default_factory=RetrievalInfo)
+
+
+class EvalCase(BaseModel):
+    id: str
+    question: str
+    expected_documents: list[str] = Field(default_factory=list)
+    expected_answer: str | None = None
+    category: EvalCategory

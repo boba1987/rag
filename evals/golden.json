@@ -1,0 +1,65 @@
+[
+  {
+    "id": "eval_001",
+    "question": "Does RingCentral integrate with Salesforce?",
+    "expected_documents": ["8015"],
+    "expected_answer": "Yes. RingCentral has a Salesforce integration for automation and analytics.",
+    "category": "factual"
+  },
+  {
+    "id": "eval_002",
+    "question": "How much does Nextiva Core cost per user?",
+    "expected_documents": ["8019"],
+    "expected_answer": "Nextiva Core is $15–$23 per user per month.",
+    "category": "pricing"
+  },
+  {
+    "id": "eval_003",
+    "question": "Does Nextiva Core include SMS text messaging?",
+    "expected_documents": ["8019"],
+    "expected_answer": "Yes. Nextiva Core includes 100 SMS text messages per user per month.",
+    "category": "features"
+  },
+  {
+    "id": "eval_004",
+    "question": "Does Nextiva Core include Google Workspace and Microsoft 365 integrations?",
+    "expected_documents": ["8019"],
+    "expected_answer": "Yes. Nextiva Core includes integrations with Google Workspace and Microsoft 365.",
+    "category": "integrations"
+  },
+  {
+    "id": "eval_005",
+    "question": "Who is Five9 better for compared with Dialpad?",
+    "expected_documents": ["106805"],
+    "expected_answer": "Five9 is better for large-scale, outbound-heavy, or regulated contact centers that need workforce management and advanced dialers. Dialpad is better for teams that want an all-in-one communications tool with real-time AI.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_006",
+    "question": "Who should use Nextiva Core or Engage?",
+    "expected_documents": ["8019"],
+    "expected_answer": "Nextiva Core and Engage are best for businesses that want a single platform for phone, SMS, chat, and video, especially growing companies that want live customer communication rather than bots.",
+    "category": "recommendation"
+  },
+  {
+    "id": "eval_007",
+    "question": "How does Nextiva Core pricing compare with RingCentral's lowest RingEX plan?",
+    "expected_documents": ["8019", "8015"],
+    "expected_answer": "Nextiva Core is $15–$23 per user per month. RingCentral's lowest RingEX tier is $20 per user per month on annual billing ($30 monthly).",
+    "category": "multi-hop"
+  },
+  {
+    "id": "eval_008",
+    "question": "How much does it cost?",
+    "expected_documents": [],
+    "expected_answer": "The question is ambiguous. Ask which provider or plan, such as Nextiva Core or RingCentral RingEX.",
+    "category": "ambiguous"
+  },
+  {
+    "id": "eval_009",
+    "question": "What is Zoom Phone's 2020 annual revenue?",
+    "expected_documents": [],
+    "expected_answer": "The indexed GetVoIP corpus does not contain Zoom Phone's 2020 annual revenue.",
+    "category": "unanswerable"
+  }
+]
