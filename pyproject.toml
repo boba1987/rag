@@ -18,6 +18,9 @@ dev = [
     "pytest>=8.0",
 ]
 
+[project.scripts]
+rag-normalize = "app.ingestion.normalize:main"
+
 [tool.setuptools.packages.find]
 include = ["app*"]
 
