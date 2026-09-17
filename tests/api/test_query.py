@@ -2,7 +2,7 @@ from fastapi.testclient import TestClient
 
 from app.api.query import answer_query
 from app.main import create_app
-from app.models.schemas import RetrievedChunk
+from app.models.schemas import QueryResponse, RetrievedChunk
 from app.query.evidence import ABSTAIN_MESSAGE
 from tests.query.fakes import DEFAULT_SCRIPTED
 
@@ -129,6 +129,16 @@ def test_post_query_rejects_unknown_strategy() -> None:
         json={"query": "Does RingCentral integrate with Salesforce?", "strategy": "colbert"},
     )
     assert response.status_code == 422
+
+
+def test_answer_query_runs_the_langgraph_workflow(monkeypatch) -> None:
+    def fake_graph(question: str, **kwargs) -> QueryResponse:
+        assert question == "graph path"
+        return QueryResponse(answer="from-graph")
+
+    monkeypatch.setattr("app.api.query.run_rag_graph", fake_graph)
+    result = answer_query("graph path", retriever=_FakeRetriever(), generator=_FakeGenerator())
+    assert result.answer == "from-graph"
 
 
 def test_answer_query_decomposes_multi_hop_into_subqueries() -> None:
