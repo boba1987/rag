@@ -37,6 +37,7 @@ def test_payload_includes_planned_metadata() -> None:
         "text": "Core starts at $15 per user.",
         "source_url": "http://localhost/review/nextiva-2/",
         "updated_at": "2026-09-02 06:31:16",
+        "parent_id": None,
     }
 
 

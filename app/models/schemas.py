@@ -59,6 +59,7 @@ class Chunk(BaseModel):
     text: str
     source_url: str | None = None
     updated_at: str | None = None
+    parent_id: str | None = None
 
 
 class RetrievedChunk(Chunk):

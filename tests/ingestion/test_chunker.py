@@ -1,6 +1,10 @@
-import pytest
-
-from app.ingestion.chunker import FixedSizeChunker, StructureAwareChunker, count_tokens, get_chunker
+from app.ingestion.chunker import (
+    FixedSizeChunker,
+    ParentChildChunker,
+    StructureAwareChunker,
+    count_tokens,
+    get_chunker,
+)
 from app.models.schemas import NormalizedDocument, Section
 
 
@@ -96,11 +100,37 @@ def test_fixed_size_ignores_headings_and_windows_tokens() -> None:
     assert first_words[-5:] == second_words[:5]
 
 
-def test_get_chunker_selects_fixed_size() -> None:
+def test_get_chunker_selects_implemented_chunkers() -> None:
     assert isinstance(get_chunker("fixed_size"), FixedSizeChunker)
     assert isinstance(get_chunker("structure_aware"), StructureAwareChunker)
+    assert isinstance(get_chunker("parent_child"), ParentChildChunker)
 
 
-def test_get_chunker_parent_child_not_ready() -> None:
-    with pytest.raises(NotImplementedError, match="ParentChildChunker"):
-        get_chunker("parent_child")
+def test_parent_child_keeps_section_as_parent() -> None:
+    document = _document(
+        Section(heading="Pricing", heading_path=["Nextiva", "Pricing"], text="Three plans start at $15."),
+    )
+    chunker = ParentChildChunker(child_size=50, overlap=5)
+    children = chunker.chunk(document)
+    parents = chunker.parents(document)
+    assert len(children) == 1
+    assert len(parents) == 1
+    assert children[0].id == "provider_8019_pricing_child_01"
+    assert children[0].parent_id == "provider_8019_pricing_parent"
+    assert parents[0].id == children[0].parent_id
+    assert parents[0].text == "Three plans start at $15."
+    assert parents[0].parent_id is None
+
+
+def test_parent_child_splits_long_section_into_children() -> None:
+    text = " ".join(f"word{i}" for i in range(40))
+    document = _document(Section(heading="Long", heading_path=["Nextiva", "Long"], text=text))
+    chunker = ParentChildChunker(child_size=15, overlap=5)
+    children = chunker.chunk(document)
+    parents = chunker.parents(document)
+    assert len(children) > 1
+    assert len(parents) == 1
+    assert all(chunk.parent_id == parents[0].id for chunk in children)
+    assert all(count_tokens(chunk.text) <= 15 for chunk in children)
+    assert count_tokens(parents[0].text) == 40
+    assert children[0].section == "Long"

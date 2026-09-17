@@ -1,6 +1,7 @@
 from app.ingestion.chunker import (
     Chunker,
     FixedSizeChunker,
+    ParentChildChunker,
     StructureAwareChunker,
     count_tokens,
     get_chunker,
@@ -21,6 +22,7 @@ __all__ = [
     "Embedder",
     "OpenAIEmbedder",
     "FixedSizeChunker",
+    "ParentChildChunker",
     "StructureAwareChunker",
     "get_chunker",
     "build_embedding_text",

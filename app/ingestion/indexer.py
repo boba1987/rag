@@ -62,6 +62,7 @@ def chunk_from_payload(payload: dict) -> Chunk:
         text=payload["text"],
         source_url=payload.get("source_url"),
         updated_at=payload.get("updated_at"),
+        parent_id=payload.get("parent_id"),
     )
 
 
@@ -77,6 +78,7 @@ def chunk_payload(chunk: Chunk) -> dict:
         "text": chunk.text,
         "source_url": chunk.source_url,
         "updated_at": chunk.updated_at,
+        "parent_id": chunk.parent_id,
     }
 
 

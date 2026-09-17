@@ -25,7 +25,7 @@ def count_tokens(text: str) -> int:
 
 
 class Chunker(ABC):
-    """Reusable chunking strategy. Structure-aware and fixed-size now; parent-child next."""
+    """Reusable chunking strategy. RAPTOR stays a later phase."""
 
     @abstractmethod
     def chunk(self, document: NormalizedDocument) -> list[Chunk]:
@@ -185,6 +185,95 @@ class FixedSizeChunker(Chunker):
         )
 
 
+class ParentChildChunker(Chunker):
+    """Small children for search; one parent section for later LLM context."""
+
+    def __init__(
+        self,
+        child_size: int = 150,
+        overlap: int = 40,
+    ) -> None:
+        self.child_size = max(child_size, 1)
+        self.overlap = max(overlap, 0)
+
+    def chunk(self, document: NormalizedDocument) -> list[Chunk]:
+        children: list[Chunk] = []
+        for section in document.sections:
+            if not section.text.strip():
+                continue
+            parent_id = self._parent_id(document, section)
+            for index, part in enumerate(self._split_child(section.text), start=1):
+                children.append(self._child_chunk(document, section, part, index, parent_id))
+        return children
+
+    def parents(self, document: NormalizedDocument) -> list[Chunk]:
+        parents: list[Chunk] = []
+        for section in document.sections:
+            if not section.text.strip():
+                continue
+            parents.append(
+                Chunk(
+                    id=self._parent_id(document, section),
+                    document_id=document.id,
+                    content_type=document.content_type,
+                    provider=document.provider,
+                    title=document.title,
+                    section=section.heading,
+                    heading_path=list(section.heading_path),
+                    text=section.text.strip(),
+                    source_url=document.url,
+                    updated_at=document.updated_at,
+                )
+            )
+        return parents
+
+    def _split_child(self, text: str) -> list[str]:
+        words = text.split()
+        if not words:
+            return []
+        if len(words) <= self.child_size:
+            return [text.strip()]
+        step = max(self.child_size - self.overlap, 1)
+        parts: list[str] = []
+        for start in range(0, len(words), step):
+            piece = words[start : start + self.child_size]
+            if piece:
+                parts.append(" ".join(piece))
+            if start + self.child_size >= len(words):
+                break
+        return parts
+
+    def _parent_id(self, document: NormalizedDocument, section: Section) -> str:
+        return f"{document.content_type}_{document.id}_{_section_slug(section.heading)}_parent"
+
+    def _child_chunk(
+        self,
+        document: NormalizedDocument,
+        section: Section,
+        text: str,
+        index: int,
+        parent_id: str,
+    ) -> Chunk:
+        slug = _section_slug(section.heading)
+        return Chunk(
+            id=f"{document.content_type}_{document.id}_{slug}_child_{index:02d}",
+            document_id=document.id,
+            content_type=document.content_type,
+            provider=document.provider,
+            title=document.title,
+            section=section.heading,
+            heading_path=list(section.heading_path),
+            text=text,
+            source_url=document.url,
+            updated_at=document.updated_at,
+            parent_id=parent_id,
+        )
+
+
+def _section_slug(heading: str) -> str:
+    return _SLUG_RE.sub("_", heading).strip("_").lower()[:40] or "section"
+
+
 def get_chunker(name: str | None = None) -> Chunker:
     chunker = name or ACTIVE_CHUNKER
     if chunker == "structure_aware":
@@ -192,7 +281,7 @@ def get_chunker(name: str | None = None) -> Chunker:
     if chunker == "fixed_size":
         return FixedSizeChunker()
     if chunker == "parent_child":
-        raise NotImplementedError("ParentChildChunker is Phase 9 commit 2.")
+        return ParentChildChunker()
     raise ValueError(f"Unknown chunker: {chunker}")
 
 
