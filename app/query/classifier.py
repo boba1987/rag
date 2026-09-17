@@ -12,6 +12,13 @@ QueryKind = Literal[
 ]
 
 _PROVIDERS = ("ringcentral", "ring central", "nextiva", "five9", "dialpad")
+_PROVIDER_CANON = (
+    ("ring central", "RingCentral"),
+    ("ringcentral", "RingCentral"),
+    ("nextiva", "Nextiva"),
+    ("five9", "Five9"),
+    ("dialpad", "Dialpad"),
+)
 _COMPARE = (" vs ", "versus", "compare", "compared", "difference between", "better than")
 _RECOMMEND = ("should i", "recommend", "right for", "good fit", "who is", "which provider")
 _PRICING = ("how much", "pricing", "price", "cost", "per user", "per month")
@@ -39,9 +46,14 @@ def classify_query(query: str) -> QueryKind:
     return "factual"
 
 
+def mentioned_providers(query: str) -> list[str]:
+    text = query.lower()
+    found: list[str] = []
+    for needle, name in _PROVIDER_CANON:
+        if needle in text and name not in found:
+            found.append(name)
+    return found
+
+
 def _provider_count(text: str) -> int:
-    found = set()
-    for name in _PROVIDERS:
-        if name in text:
-            found.add(name.replace(" ", ""))
-    return len(found)
+    return len(mentioned_providers(text))
