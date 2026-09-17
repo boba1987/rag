@@ -70,58 +70,73 @@ def retrieve(state: RagState) -> dict:
     return {"corrected": corrected}
 
 
-def respond(state: RagState) -> dict:
-    """Commit 1: one node. Commit 2 splits generate vs abstain."""
+def route_after_retrieve(state: RagState) -> str:
+    if state["corrected"].verdict.sufficient:
+        return "generate"
+    return "abstain"
+
+
+def generate(state: RagState) -> dict:
+    corrected = state["corrected"]
+    grounded = generate_grounded_answer(
+        state["question"],
+        corrected.chunks,
+        generator=state.get("generator"),
+    )
+    return {"response": _query_response(state, grounded)}
+
+
+def abstain(state: RagState) -> dict:
+    return {"response": _query_response(state, GroundedAnswer(answer=ABSTAIN_MESSAGE, sources=[]))}
+
+
+def _query_response(state: RagState, grounded: GroundedAnswer) -> QueryResponse:
     corrected = state["corrected"]
     extraction = state["extraction"]
-    if corrected.verdict.sufficient:
-        grounded = generate_grounded_answer(
-            state["question"],
-            corrected.chunks,
-            generator=state.get("generator"),
-        )
-    else:
-        grounded = GroundedAnswer(answer=ABSTAIN_MESSAGE, sources=[])
-    return {
-        "response": QueryResponse(
-            answer=grounded.answer,
-            sources=grounded.sources,
-            retrieval=RetrievalInfo(
-                strategy=state["strategy"],
-                filters=corrected.filters,
-                inferred=state.get("infer", True),
-                preprocess=QueryPreprocess(
-                    kind=extraction.kind,
-                    rewritten=rewrite_query(
-                        state["question"],
-                        extraction=extraction,
-                        catalog=state.get("catalog"),
-                    ),
-                    queries=corrected.queries + corrected.retry_queries,
-                    providers=extraction.providers,
-                    topics=extraction.topics,
-                    extractor=extraction.source,
+    return QueryResponse(
+        answer=grounded.answer,
+        sources=grounded.sources,
+        retrieval=RetrievalInfo(
+            strategy=state["strategy"],
+            filters=corrected.filters,
+            inferred=state.get("infer", True),
+            preprocess=QueryPreprocess(
+                kind=extraction.kind,
+                rewritten=rewrite_query(
+                    state["question"],
+                    extraction=extraction,
+                    catalog=state.get("catalog"),
                 ),
-                evidence=EvidenceInfo(
-                    sufficient=corrected.verdict.sufficient,
-                    reason=corrected.verdict.reason,
-                    overlap=corrected.verdict.overlap,
-                    retried=corrected.retried,
-                ),
+                queries=corrected.queries + corrected.retry_queries,
+                providers=extraction.providers,
+                topics=extraction.topics,
+                extractor=extraction.source,
             ),
-        )
-    }
+            evidence=EvidenceInfo(
+                sufficient=corrected.verdict.sufficient,
+                reason=corrected.verdict.reason,
+                overlap=corrected.verdict.overlap,
+                retried=corrected.retried,
+            ),
+        ),
+    )
 
 
 def build_rag_graph():
     builder = StateGraph(RagState)
     builder.add_node("preprocess", preprocess)
     builder.add_node("retrieve", retrieve)
-    builder.add_node("respond", respond)
+    builder.add_node("generate", generate)
+    builder.add_node("abstain", abstain)
     builder.add_edge(START, "preprocess")
     builder.add_edge("preprocess", "retrieve")
-    builder.add_edge("retrieve", "respond")
-    builder.add_edge("respond", END)
+    builder.add_conditional_edges(
+        "retrieve",
+        route_after_retrieve,
+        {"generate": "generate", "abstain": "abstain"},
+    )
+    builder.add_edge("generate", END)
+    builder.add_edge("abstain", END)
     return builder.compile()
 
 

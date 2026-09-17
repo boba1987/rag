@@ -1,5 +1,8 @@
+from types import SimpleNamespace
+
 from app.models.schemas import RetrievedChunk
-from app.workflows.rag_graph import build_rag_graph, run_rag_graph
+from app.query.evidence import ABSTAIN_MESSAGE
+from app.workflows.rag_graph import build_rag_graph, route_after_retrieve, run_rag_graph
 from tests.query.fakes import DEFAULT_SCRIPTED
 
 
@@ -43,3 +46,38 @@ def test_graph_runs_existing_modules() -> None:
     assert result.retrieval.preprocess.kind == "factual"
     assert result.retrieval.evidence is not None
     assert result.retrieval.evidence.sufficient is True
+
+
+class _EmptyRetriever:
+    def search(self, query: str, top_k=None, filters=None, infer: bool = False):
+        return []
+
+
+class _BoomGenerator:
+    def generate(self, question: str, context: str) -> str:
+        raise AssertionError("abstain path must not generate")
+
+
+def test_graph_abstains_without_calling_generator() -> None:
+    result = run_rag_graph(
+        "What is Zoom Phone's 2020 revenue?",
+        retriever=_EmptyRetriever(),
+        generator=_BoomGenerator(),
+        extractor=DEFAULT_SCRIPTED,
+        infer=False,
+    )
+    assert result.answer == ABSTAIN_MESSAGE
+    assert result.sources == []
+    assert result.retrieval.evidence is not None
+    assert result.retrieval.evidence.sufficient is False
+
+
+def test_route_after_retrieve_follows_evidence() -> None:
+    assert (
+        route_after_retrieve({"corrected": SimpleNamespace(verdict=SimpleNamespace(sufficient=True))})
+        == "generate"
+    )
+    assert (
+        route_after_retrieve({"corrected": SimpleNamespace(verdict=SimpleNamespace(sufficient=False))})
+        == "abstain"
+    )
