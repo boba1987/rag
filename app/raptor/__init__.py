@@ -1,4 +1,5 @@
 from app.raptor.clustering import choose_cluster_count, cluster_embeddings, cosine_similarity
+from app.raptor.index import index_raptor_document, raptor_payload
 from app.raptor.summarization import (
     ClusterSummarizer,
     ConcatSummarizer,
@@ -22,5 +23,7 @@ __all__ = [
     "cosine_similarity",
     "fill_summaries",
     "get_summarizer",
+    "index_raptor_document",
     "leaf_from_chunk",
+    "raptor_payload",
 ]

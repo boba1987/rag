@@ -1,7 +1,7 @@
 import pytest
 from qdrant_client import QdrantClient
 
-from app.config import chunked_dir, qdrant_collection
+from app.config import QDRANT_COLLECTION_RAPTOR, chunked_dir, qdrant_collection
 from app.ingestion.indexer import ensure_chunker_collections
 
 
@@ -19,6 +19,15 @@ def test_each_chunker_has_its_own_collection_and_directory() -> None:
 def test_unknown_chunker_is_rejected() -> None:
     with pytest.raises(ValueError, match="Unknown chunker"):
         qdrant_collection("raptor")
+
+
+def test_raptor_uses_its_own_collection_not_a_chunker() -> None:
+    assert QDRANT_COLLECTION_RAPTOR == "getvoip_chunks_raptor"
+    assert QDRANT_COLLECTION_RAPTOR not in {
+        qdrant_collection("structure_aware"),
+        qdrant_collection("fixed_size"),
+        qdrant_collection("parent_child"),
+    }
 
 
 def test_ensure_chunker_collections_creates_all_three() -> None:

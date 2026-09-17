@@ -12,6 +12,7 @@ PROVIDERS_PATH = PROJECT_ROOT / "providers.json"
 
 NORMALIZED_DIR = PROJECT_ROOT / "documents" / "normalized"
 INDEXED_DIR = PROJECT_ROOT / "documents" / "indexed"
+RAPTOR_DIR = PROJECT_ROOT / "documents" / "raptor"
 GOLDEN_EVAL_PATH = PROJECT_ROOT / "evals" / "golden.json"
 QUERY_DIR = PROJECT_ROOT / "documents" / "query"
 
@@ -74,6 +75,7 @@ OPENAI_EMBED_DIMENSIONS = 1536
 
 QDRANT_URL = os.getenv("QDRANT_URL", "http://127.0.0.1:6333")
 QDRANT_COLLECTION = qdrant_collection()
+QDRANT_COLLECTION_RAPTOR = os.getenv("QDRANT_COLLECTION_RAPTOR", "getvoip_chunks_raptor")
 DENSE_TOP_K = int(os.getenv("DENSE_TOP_K", "5"))
 RRF_K = int(os.getenv("RRF_K", "60"))
 RERANK_CANDIDATES = int(os.getenv("RERANK_CANDIDATES", "20"))

@@ -123,7 +123,7 @@ def fill_summaries(
     return updated
 
 
-def _embed_text(node: RaptorNode) -> str:
+def raptor_embed_text(node: RaptorNode) -> str:
     lines = []
     if node.title:
         lines.append(f"Title: {node.title}")
@@ -172,5 +172,5 @@ def build_raptor_tree(
         if len(parents) <= 1 or embedder is None:
             return tree
         current = parents
-        current_vectors = embedder.embed([_embed_text(node) for node in current])
+        current_vectors = embedder.embed([raptor_embed_text(node) for node in current])
     return tree

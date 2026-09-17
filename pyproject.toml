@@ -34,6 +34,7 @@ rag-chunk = "app.ingestion.chunk:main"
 rag-index = "app.ingestion.index:main"
 rag-ingest = "app.ingestion.ingest:main"
 rag-eval = "app.evaluation.run:main"
+rag-raptor-index = "app.raptor.index:main"
 
 [tool.setuptools.packages.find]
 include = ["app*"]
