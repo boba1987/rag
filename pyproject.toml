@@ -31,6 +31,7 @@ rerank = [
 rag-normalize = "app.ingestion.normalize:main"
 rag-chunk = "app.ingestion.chunk:main"
 rag-index = "app.ingestion.index:main"
+rag-ingest = "app.ingestion.ingest:main"
 rag-eval = "app.evaluation.run:main"
 
 [tool.setuptools.packages.find]

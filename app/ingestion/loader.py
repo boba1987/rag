@@ -55,61 +55,73 @@ def _infer_provider(*candidates: str | None) -> str | None:
     return None
 
 
+def load_raw_posts_from_file(path: str | Path, content_type: ContentType) -> list[RawPost]:
+    """Load a JSON list using the article, review, or provider fixture shape."""
+    source = Path(path)
+    if not source.exists():
+        raise FileNotFoundError(f"No fixture file at {source}")
+    rows = _load_json(source)
+    if content_type == "article":
+        return [_article_from_row(row) for row in rows]
+    if content_type == "review":
+        return [_review_from_row(row) for row in rows]
+    if content_type == "provider":
+        return [_provider_from_row(row) for row in rows]
+    raise ValueError(f"Unknown content type: {content_type}")
+
+
 def _load_articles() -> list[RawPost]:
-    posts = []
-    for row in _load_json(ARTICLES_PATH):
-        title = row.get("title") or ""
-        posts.append(
-            RawPost(
-                id=str(row["id"]),
-                title=title,
-                slug=row.get("slug") or "",
-                html=row.get("content") or "",
-                content_type="article",
-                provider=_infer_provider(title, row.get("slug")),
-                url=_clean_url(row.get("guid")),
-                published_at=row.get("post_date"),
-                updated_at=row.get("post_modified"),
-            )
-        )
-    return posts
+    return [_article_from_row(row) for row in _load_json(ARTICLES_PATH)]
 
 
 def _load_reviews() -> list[RawPost]:
-    posts = []
-    for row in _load_json(REVIEWS_PATH):
-        html = row.get("review") or row.get("content") or ""
-        posts.append(
-            RawPost(
-                id=str(row["id"]),
-                title=row.get("title") or "",
-                slug=row.get("slug") or "",
-                html=html,
-                content_type="review",
-                provider=row.get("provider"),
-                url=_clean_url(row.get("guid")),
-                published_at=row.get("post_date"),
-                updated_at=row.get("post_modified"),
-            )
-        )
-    return posts
+    return [_review_from_row(row) for row in _load_json(REVIEWS_PATH)]
 
 
 def _load_providers() -> list[RawPost]:
-    posts = []
-    for row in _load_json(PROVIDERS_PATH):
-        name = row.get("name") or row.get("title") or ""
-        posts.append(
-            RawPost(
-                id=str(row["id"]),
-                title=name,
-                slug=row.get("slug") or "",
-                html=row.get("content") or "",
-                content_type="provider",
-                provider=name or None,
-                url=_clean_url(row.get("guid")),
-                published_at=row.get("post_date"),
-                updated_at=row.get("post_modified"),
-            )
-        )
-    return posts
+    return [_provider_from_row(row) for row in _load_json(PROVIDERS_PATH)]
+
+
+def _article_from_row(row: dict) -> RawPost:
+    title = row.get("title") or ""
+    return RawPost(
+        id=str(row["id"]),
+        title=title,
+        slug=row.get("slug") or "",
+        html=row.get("content") or "",
+        content_type="article",
+        provider=_infer_provider(title, row.get("slug")),
+        url=_clean_url(row.get("guid")),
+        published_at=row.get("post_date"),
+        updated_at=row.get("post_modified"),
+    )
+
+
+def _review_from_row(row: dict) -> RawPost:
+    html = row.get("review") or row.get("content") or ""
+    return RawPost(
+        id=str(row["id"]),
+        title=row.get("title") or "",
+        slug=row.get("slug") or "",
+        html=html,
+        content_type="review",
+        provider=row.get("provider"),
+        url=_clean_url(row.get("guid")),
+        published_at=row.get("post_date"),
+        updated_at=row.get("post_modified"),
+    )
+
+
+def _provider_from_row(row: dict) -> RawPost:
+    name = row.get("name") or row.get("title") or ""
+    return RawPost(
+        id=str(row["id"]),
+        title=name,
+        slug=row.get("slug") or "",
+        html=row.get("content") or "",
+        content_type="provider",
+        provider=name or None,
+        url=_clean_url(row.get("guid")),
+        published_at=row.get("post_date"),
+        updated_at=row.get("post_modified"),
+    )

@@ -107,8 +107,8 @@ def upsert_chunks(
 
 
 def write_index_report(report: dict, path: Path | None = None) -> Path:
-    INDEXED_DIR.mkdir(parents=True, exist_ok=True)
     target = path or INDEXED_DIR / "last-run.json"
+    target.parent.mkdir(parents=True, exist_ok=True)
     payload = {"ran_at": datetime.now(timezone.utc).isoformat(), **report}
     target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return target
