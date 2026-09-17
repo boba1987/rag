@@ -5,7 +5,7 @@ import re
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from app.config import CHUNKED_DIR, HARD_MAX_TOKENS, OVERLAP_TOKENS, TARGET_MAX_TOKENS, TARGET_MIN_TOKENS
+from app.config import HARD_MAX_TOKENS, OVERLAP_TOKENS, TARGET_MAX_TOKENS, TARGET_MIN_TOKENS, chunked_dir
 from app.models.schemas import Chunk, NormalizedDocument, Section
 
 _SLUG_RE = re.compile(r"[^a-zA-Z0-9]+")
@@ -135,9 +135,10 @@ class StructureAwareChunker(Chunker):
         )
 
 
-def write_chunks(source_name: str, chunks: list[Chunk]) -> Path:
-    CHUNKED_DIR.mkdir(parents=True, exist_ok=True)
-    path = CHUNKED_DIR / Path(source_name).name
+def write_chunks(source_name: str, chunks: list[Chunk], directory: Path | None = None) -> Path:
+    target = directory or chunked_dir()
+    target.mkdir(parents=True, exist_ok=True)
+    path = target / Path(source_name).name
     path.write_text(
         json.dumps([chunk.model_dump() for chunk in chunks], ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",

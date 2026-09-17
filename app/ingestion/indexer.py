@@ -8,7 +8,13 @@ from uuid import NAMESPACE_URL, uuid5
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, PointStruct, VectorParams
 
-from app.config import INDEXED_DIR, QDRANT_COLLECTION, QDRANT_URL
+from app.config import (
+    INDEXED_DIR,
+    OPENAI_EMBED_DIMENSIONS,
+    QDRANT_COLLECTION,
+    QDRANT_COLLECTIONS,
+    QDRANT_URL,
+)
 from app.models.schemas import Chunk
 
 
@@ -18,6 +24,17 @@ def chunk_point_id(chunk_id: str) -> str:
 
 def get_qdrant_client(url: str = QDRANT_URL) -> QdrantClient:
     return QdrantClient(url=url, check_compatibility=False)
+
+
+def ensure_chunker_collections(
+    client: QdrantClient | None = None,
+    dimensions: int = OPENAI_EMBED_DIMENSIONS,
+) -> dict[str, str]:
+    """Create one Qdrant collection per chunker. Existing collections are left as-is."""
+    qdrant = client or get_qdrant_client()
+    for collection in QDRANT_COLLECTIONS.values():
+        ensure_collection(qdrant, dimensions, collection)
+    return dict(QDRANT_COLLECTIONS)
 
 
 def ensure_collection(

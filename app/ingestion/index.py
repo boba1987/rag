@@ -5,7 +5,14 @@ import json
 import sys
 from pathlib import Path
 
-from app.config import CHUNKED_DIR, EMBEDDER_PROVIDER, OPENAI_EMBED_MODEL, QDRANT_COLLECTION
+from app.config import (
+    ACTIVE_CHUNKER,
+    CHUNKER_NAMES,
+    EMBEDDER_PROVIDER,
+    OPENAI_EMBED_MODEL,
+    chunked_dir,
+    qdrant_collection,
+)
 from app.ingestion.embed_text import build_embedding_text
 from app.ingestion.embedder import get_embedder
 from app.ingestion.indexer import get_qdrant_client, upsert_chunks, write_index_report
@@ -23,13 +30,38 @@ def main(argv: list[str] | None = None) -> int:
         choices=("article", "review", "provider"),
         help="Document content type",
     )
-    parser.add_argument("--all", action="store_true", help="Index every file in documents/chunked/")
+    parser.add_argument("--all", action="store_true", help="Index every file in the chunker directory")
+    parser.add_argument(
+        "--chunker",
+        choices=CHUNKER_NAMES,
+        default=ACTIVE_CHUNKER,
+        help="Which chunker collection and chunk directory to use",
+    )
+    parser.add_argument(
+        "--ensure-collections",
+        action="store_true",
+        help="Create one Qdrant collection per chunker and exit",
+    )
     args = parser.parse_args(argv)
 
-    if not args.all and not args.post_id:
-        parser.error("Provide --id or --all")
+    if args.ensure_collections:
+        from app.ingestion.indexer import ensure_chunker_collections
 
-    files = _load_chunk_files(post_id=args.post_id, content_type=args.content_type)
+        created = ensure_chunker_collections(get_qdrant_client())
+        for chunker, collection in created.items():
+            print(f"{chunker} → {collection}")
+        return 0
+
+    if not args.all and not args.post_id:
+        parser.error("Provide --id, --all, or --ensure-collections")
+
+    collection = qdrant_collection(args.chunker)
+    source_dir = chunked_dir(args.chunker)
+    files = _load_chunk_files(
+        post_id=args.post_id,
+        content_type=args.content_type,
+        directory=source_dir,
+    )
     if not files:
         print("No chunk files matched. Run python -m app.ingestion.chunk first.", file=sys.stderr)
         return 1
@@ -46,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
             vectors,
             embedder.dimensions,
             client=client,
-            collection=QDRANT_COLLECTION,
+            collection=collection,
         )
         total += upserted
         doc = {
@@ -57,11 +89,12 @@ def main(argv: list[str] | None = None) -> int:
             "status": "ok",
         }
         documents.append(doc)
-        print(f"{path.name}  ({upserted} chunks → {QDRANT_COLLECTION})")
+        print(f"{path.name}  ({upserted} chunks → {collection})")
 
     report_path = write_index_report(
         {
-            "collection": QDRANT_COLLECTION,
+            "collection": collection,
+            "chunker": args.chunker,
             "embedder": EMBEDDER_PROVIDER,
             "model": OPENAI_EMBED_MODEL if EMBEDDER_PROVIDER == "openai" else EMBEDDER_PROVIDER,
             "chunk_count": total,
@@ -82,11 +115,13 @@ def _embed_batches(embedder, texts: list[str]) -> list[list[float]]:
 def _load_chunk_files(
     post_id: str | None,
     content_type: str | None,
+    directory: Path | None = None,
 ) -> list[tuple[Path, list[Chunk]]]:
-    if not CHUNKED_DIR.exists():
+    source = directory if directory is not None else chunked_dir()
+    if not source.exists():
         return []
     matches = []
-    for path in sorted(CHUNKED_DIR.glob("*.json")):
+    for path in sorted(source.glob("*.json")):
         raw = json.loads(path.read_text(encoding="utf-8"))
         chunks = [Chunk.model_validate(row) for row in raw]
         if not chunks:
