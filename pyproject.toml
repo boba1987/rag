@@ -17,6 +17,7 @@ dependencies = [
     "fastapi>=0.115",
     "uvicorn>=0.30",
     "langgraph>=0.2",
+    "langfuse>=3.0",
 ]
 
 [project.optional-dependencies]

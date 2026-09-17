@@ -87,6 +87,11 @@ CROSS_ENCODER_MODEL = os.getenv(
 )
 BGE_RERANKER_MODEL = os.getenv("BGE_RERANKER_MODEL", "BAAI/bge-reranker-base")
 
+LANGFUSE_PUBLIC_KEY = os.getenv("LANGFUSE_PUBLIC_KEY", "")
+LANGFUSE_SECRET_KEY = os.getenv("LANGFUSE_SECRET_KEY", "")
+LANGFUSE_BASE_URL = os.getenv("LANGFUSE_BASE_URL") or os.getenv("LANGFUSE_HOST") or "https://cloud.langfuse.com"
+LANGFUSE_ENABLED = os.getenv("LANGFUSE_ENABLED", "").lower()
+
 # Rough list prices for experiment cost tracking, not invoices.
 OPENAI_EMBED_USD_PER_1M = float(os.getenv("OPENAI_EMBED_USD_PER_1M", "0.02"))
 OPENAI_INPUT_USD_PER_1M = float(os.getenv("OPENAI_INPUT_USD_PER_1M", "0.40"))
