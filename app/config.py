@@ -65,6 +65,8 @@ EMBEDDER_PROVIDER = os.getenv("EMBEDDER", "openai")
 GENERATOR_PROVIDER = os.getenv("GENERATOR", "openai")
 QUERY_EXTRACTOR = os.getenv("QUERY_EXTRACTOR", "openai")
 QUERY_EXTRACTOR_MODEL = os.getenv("QUERY_EXTRACTOR_MODEL", "gpt-4.1-nano")
+EVIDENCE_CHECKER = os.getenv("EVIDENCE_CHECKER", "heuristic")
+EVIDENCE_MIN_OVERLAP = float(os.getenv("EVIDENCE_MIN_OVERLAP", "0.3"))
 OPENAI_EMBED_DIMENSIONS = 1536
 
 QDRANT_URL = os.getenv("QDRANT_URL", "http://127.0.0.1:6333")

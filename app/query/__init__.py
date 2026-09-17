@@ -10,6 +10,14 @@ from app.query.extractor import (
     get_extractor,
     understand_query,
 )
+from app.query.evidence import (
+    EvidenceChecker,
+    EvidenceVerdict,
+    HeuristicEvidenceChecker,
+    OpenAIEvidenceChecker,
+    check_evidence,
+    get_evidence_checker,
+)
 from app.query.rewriter import rewrite_query
 
 __all__ = [
@@ -19,7 +27,13 @@ __all__ = [
     "QueryExtraction",
     "QueryExtractor",
     "QueryKind",
+    "EvidenceChecker",
+    "EvidenceVerdict",
+    "HeuristicEvidenceChecker",
+    "OpenAIEvidenceChecker",
+    "check_evidence",
     "classify_query",
+    "get_evidence_checker",
     "decompose_query",
     "expand_queries",
     "get_catalog",
