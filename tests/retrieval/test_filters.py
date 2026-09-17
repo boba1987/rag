@@ -1,6 +1,7 @@
 from qdrant_client.http.models import Filter, MatchValue
 
 from app.models.schemas import RetrievalFilters
+from app.query.extractor import QueryExtraction
 from app.retrieval.filters import build_qdrant_filter, infer_filters, merge_filters
 
 
@@ -22,44 +23,80 @@ def test_builds_must_conditions_for_exact_payload_fields() -> None:
     assert isinstance(qfilter.must[0].match, MatchValue)
 
 
-def test_infers_provider_and_pricing_section() -> None:
-    filters = infer_filters("How much does RingCentral cost?")
+def test_infers_from_extraction() -> None:
+    filters = infer_filters(
+        "How much does RingCentral cost?",
+        QueryExtraction(kind="pricing", providers=["RingCentral"], topics=["pricing"], source="openai"),
+    )
     assert filters.provider == "RingCentral"
-    assert filters.section == "Pricing"
-    assert filters.content_type == "provider"
-
-
-def test_infers_nextiva_integrations() -> None:
-    filters = infer_filters("Does Nextiva Core include Google Workspace and Microsoft 365 integrations?")
-    assert filters.provider == "Nextiva"
-    assert filters.section == "Integration"
+    assert filters.section == "pricing"
     assert filters.content_type == "provider"
 
 
 def test_infers_review_content_type() -> None:
-    filters = infer_filters("What do customers say about Nextiva support?")
+    filters = infer_filters(
+        "What do customers say about Nextiva support?",
+        QueryExtraction(kind="review", providers=["Nextiva"], topics=["support"], source="openai"),
+    )
     assert filters.provider == "Nextiva"
-    assert filters.section == "Support"
+    assert filters.section == "support"
     assert filters.content_type == "review"
 
 
+def test_without_extraction_only_matches_catalog_providers(monkeypatch) -> None:
+    from types import SimpleNamespace
+
+    from app.query.catalog import catalog_from_qdrant
+
+    class _Client:
+        def collection_exists(self, name: str) -> bool:
+            return True
+
+        def scroll(self, **kwargs):
+            return [
+                SimpleNamespace(
+                    payload={
+                        "provider": "RingCentral",
+                        "title": "RingCentral",
+                        "section": "Pricing",
+                        "text": "",
+                    }
+                )
+            ], None
+
+    monkeypatch.setattr("app.retrieval.filters.get_catalog", lambda: catalog_from_qdrant(client=_Client()))
+    filters = infer_filters("How much does RingCentral cost?")
+    assert filters.provider == "RingCentral"
+    assert filters.section is None
+
+
 def test_does_not_invent_unknown_providers() -> None:
-    filters = infer_filters("How much does Five9 cost per concurrent user?")
+    filters = infer_filters("How much does AcmePBX cost per concurrent user?")
     assert filters.provider is None
-    assert filters.section == "Pricing"
 
 
-def test_ambiguous_cost_query_has_no_provider() -> None:
-    filters = infer_filters("How much does it cost?")
+def test_two_catalog_providers_do_not_force_a_single_filter() -> None:
+    filters = infer_filters(
+        "Compare RingCentral and Nextiva pricing.",
+        QueryExtraction(
+            kind="comparison",
+            providers=["RingCentral", "Nextiva"],
+            topics=["pricing"],
+            source="openai",
+        ),
+    )
     assert filters.provider is None
-    assert filters.section == "Pricing"
+    assert filters.section == "pricing"
 
 
 def test_explicit_filters_override_inferred() -> None:
     merged = merge_filters(
         RetrievalFilters(provider="Nextiva"),
-        infer_filters("How much does RingCentral cost?"),
+        infer_filters(
+            "How much does RingCentral cost?",
+            QueryExtraction(kind="pricing", providers=["RingCentral"], topics=["pricing"], source="openai"),
+        ),
     )
     assert merged is not None
     assert merged.provider == "Nextiva"
-    assert merged.section == "Pricing"
+    assert merged.section == "pricing"

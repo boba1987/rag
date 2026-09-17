@@ -1,33 +1,30 @@
 from __future__ import annotations
 
-import re
-
 from qdrant_client.http.models import FieldCondition, Filter, MatchValue
 
 from app.models.schemas import RetrievalFilters, RetrievedChunk
+from app.query.catalog import get_catalog
+from app.query.extractor import QueryExtraction
 
-_PROVIDERS = (("ring central", "RingCentral"), ("ringcentral", "RingCentral"), ("nextiva", "Nextiva"))
-_PRICING_HINTS = ("how much", "pricing", "price", "cost", "per user", "per month", "$")
-_INTEGRATION_HINTS = (
-    "integrat",
-    "salesforce",
-    "zendesk",
-    "hubspot",
-    "microsoft 365",
-    "google workspace",
-    "teams",
-)
-_SUPPORT_HINTS = ("support", "customer service")
-_REVIEW_HINTS = ("review", "customers say", "reviewers")
+_KIND_CONTENT_TYPE = {
+    "review": "review",
+    "pricing": "provider",
+}
 
 
-def infer_filters(query: str) -> RetrievalFilters:
-    """Heuristic filters from the question. Conservative: only Nextiva/RingCentral providers."""
-    text = query.lower()
-    provider = _infer_provider(text)
-    section = _infer_section(text)
-    content_type = _infer_content_type(text, provider=provider, section=section)
-    return RetrievalFilters(provider=provider, section=section, content_type=content_type)
+def infer_filters(query: str, extraction: QueryExtraction | None = None) -> RetrievalFilters:
+    """Filters from LLM extraction when provided; otherwise catalog provider names only."""
+    if extraction is not None:
+        providers = extraction.providers
+        provider = providers[0] if len(providers) == 1 else None
+        section = extraction.topics[0] if extraction.topics else None
+        content_type = _KIND_CONTENT_TYPE.get(extraction.kind)
+        if content_type is None and provider and section:
+            content_type = "provider"
+        return RetrievalFilters(provider=provider, section=section, content_type=content_type)
+    providers = get_catalog().match_providers(query)
+    provider = providers[0] if len(providers) == 1 else None
+    return RetrievalFilters(provider=provider)
 
 
 def merge_filters(explicit: RetrievalFilters | None, inferred: RetrievalFilters | None) -> RetrievalFilters | None:
@@ -74,30 +71,3 @@ def apply_section_filter(chunks: list[RetrievedChunk], section: str | None) -> l
         return chunks
     matched = [chunk for chunk in chunks if matches_section(chunk, section)]
     return matched or chunks
-
-
-def _infer_provider(text: str) -> str | None:
-    for needle, name in _PROVIDERS:
-        if needle in text:
-            return name
-    return None
-
-
-def _infer_section(text: str) -> str | None:
-    if any(hint in text for hint in _PRICING_HINTS):
-        return "Pricing"
-    if any(hint in text for hint in _INTEGRATION_HINTS):
-        return "Integration"
-    if any(hint in text for hint in _SUPPORT_HINTS):
-        return "Support"
-    return None
-
-
-def _infer_content_type(text: str, provider: str | None, section: str | None) -> str | None:
-    if any(hint in text for hint in _REVIEW_HINTS):
-        return "review"
-    if provider and section in {"Pricing", "Integration"}:
-        return "provider"
-    if re.search(r"\b(article|buying guide)\b", text):
-        return "article"
-    return None

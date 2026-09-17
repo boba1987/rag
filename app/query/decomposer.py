@@ -1,46 +1,44 @@
 from __future__ import annotations
 
-from app.query.classifier import classify_query, mentioned_providers
+from app.query.catalog import QueryCatalog, get_catalog
+from app.query.extractor import QueryExtraction, understand_query
 from app.query.rewriter import rewrite_query
 
-_PRICING = ("how much", "pricing", "price", "cost", "per user", "per month")
 
-
-def mentioned_topics(query: str) -> list[str]:
-    text = query.lower()
-    topics: list[str] = []
-    if any(hint in text for hint in _PRICING):
-        topics.append("pricing")
-    if "salesforce" in text:
-        topics.append("Salesforce integration")
-    elif "integrat" in text:
-        topics.append("integrations")
-    if "support" in text:
-        topics.append("support")
-    return topics
-
-
-def decompose_query(query: str) -> list[str]:
+def decompose_query(
+    query: str,
+    extraction: QueryExtraction | None = None,
+    catalog: QueryCatalog | None = None,
+    extractor=None,
+) -> list[str]:
     """Split a multi-provider / multi-topic question into retrieval sub-queries."""
-    rewritten = rewrite_query(query)
-    providers = mentioned_providers(rewritten)
-    topics = mentioned_topics(rewritten)
+    source = catalog or get_catalog()
+    extracted = extraction or understand_query(query, extractor=extractor, catalog=source)
+    rewritten = rewrite_query(query, extraction=extracted, catalog=source)
+    providers = extracted.providers or source.match_providers(rewritten)
+    topics = extracted.topics
     if len(providers) >= 2 and topics:
         return [f"{provider} {topic}" for topic in topics for provider in providers]
     return [rewritten]
 
 
-def expand_queries(query: str) -> list[str]:
+def expand_queries(
+    query: str,
+    extraction: QueryExtraction | None = None,
+    catalog: QueryCatalog | None = None,
+    extractor=None,
+) -> list[str]:
     """Queries to retrieve. Uses decomposition when it splits; otherwise rewrite plus one alternate."""
-    parts = decompose_query(query)
+    source = catalog or get_catalog()
+    extracted = extraction or understand_query(query, extractor=extractor, catalog=source)
+    parts = decompose_query(query, extraction=extracted, catalog=source)
     if len(parts) > 1:
         return parts
     rewritten = parts[0]
     extras: list[str] = []
-    kind = classify_query(query)
-    if kind == "pricing":
+    if extracted.kind == "pricing":
         extras.append(f"{rewritten} plans per user")
-    elif kind == "review":
+    elif extracted.kind == "review":
         extras.append(f"{rewritten} customer support")
     return _unique([rewritten, *extras])
 

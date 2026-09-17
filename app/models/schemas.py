@@ -4,6 +4,15 @@ from pydantic import BaseModel, Field
 
 ContentType = Literal["article", "review", "provider"]
 RetrievalStrategy = Literal["dense", "sparse", "hybrid", "rerank"]
+QueryKind = Literal[
+    "factual",
+    "comparison",
+    "recommendation",
+    "pricing",
+    "review",
+    "multi-hop",
+]
+ExtractorName = Literal["heuristic", "openai"]
 EvalCategory = Literal[
     "factual",
     "pricing",
@@ -93,10 +102,20 @@ class QueryRequest(BaseModel):
     strategy: RetrievalStrategy = "dense"
 
 
+class QueryPreprocess(BaseModel):
+    kind: QueryKind
+    rewritten: str
+    queries: list[str] = Field(default_factory=list)
+    providers: list[str] = Field(default_factory=list)
+    topics: list[str] = Field(default_factory=list)
+    extractor: ExtractorName = "heuristic"
+
+
 class RetrievalInfo(BaseModel):
     strategy: RetrievalStrategy = "dense"
     filters: RetrievalFilters | None = None
     inferred: bool = False
+    preprocess: QueryPreprocess | None = None
 
 
 class QueryResponse(BaseModel):

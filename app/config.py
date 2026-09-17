@@ -13,6 +13,7 @@ PROVIDERS_PATH = PROJECT_ROOT / "providers.json"
 NORMALIZED_DIR = PROJECT_ROOT / "documents" / "normalized"
 INDEXED_DIR = PROJECT_ROOT / "documents" / "indexed"
 GOLDEN_EVAL_PATH = PROJECT_ROOT / "evals" / "golden.json"
+QUERY_DIR = PROJECT_ROOT / "documents" / "query"
 
 CHUNKER_NAMES = ("structure_aware", "fixed_size", "parent_child")
 ACTIVE_CHUNKER = os.getenv("CHUNKER", "structure_aware")
@@ -62,6 +63,8 @@ OPENAI_CHAT_MODEL = os.getenv("OPENAI_CHAT_MODEL", "gpt-4.1-mini")
 
 EMBEDDER_PROVIDER = os.getenv("EMBEDDER", "openai")
 GENERATOR_PROVIDER = os.getenv("GENERATOR", "openai")
+QUERY_EXTRACTOR = os.getenv("QUERY_EXTRACTOR", "openai")
+QUERY_EXTRACTOR_MODEL = os.getenv("QUERY_EXTRACTOR_MODEL", "gpt-4.1-nano")
 OPENAI_EMBED_DIMENSIONS = 1536
 
 QDRANT_URL = os.getenv("QDRANT_URL", "http://127.0.0.1:6333")
