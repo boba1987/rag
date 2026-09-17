@@ -9,6 +9,7 @@ from app.config import (
     ACTIVE_CHUNKER,
     CHUNKER_NAMES,
     EMBEDDER_PROVIDER,
+    INDEXED_DIR,
     OPENAI_EMBED_MODEL,
     chunked_dir,
     qdrant_collection,
@@ -99,7 +100,8 @@ def main(argv: list[str] | None = None) -> int:
             "model": OPENAI_EMBED_MODEL if EMBEDDER_PROVIDER == "openai" else EMBEDDER_PROVIDER,
             "chunk_count": total,
             "documents": documents,
-        }
+        },
+        path=INDEXED_DIR / f"last-run-{args.chunker}.json",
     )
     print(f"report {report_path}  ({total} chunks total)")
     return 0
