@@ -1,6 +1,12 @@
 import pytest
 
-from app.retrieval import ParentExpandingRetriever, RerankRetriever, SparseRetriever, retriever_for
+from app.raptor.retrieval import RaptorRetriever
+from app.retrieval import (
+    ParentExpandingRetriever,
+    RerankRetriever,
+    SparseRetriever,
+    retriever_for,
+)
 
 
 def test_retriever_for_sparse_is_bm25() -> None:
@@ -9,6 +15,13 @@ def test_retriever_for_sparse_is_bm25() -> None:
 
 def test_retriever_for_rerank_is_pipeline() -> None:
     assert isinstance(retriever_for("rerank"), RerankRetriever)
+
+
+def test_retriever_for_raptor_is_not_parent_expanded(monkeypatch) -> None:
+    monkeypatch.setattr("app.retrieval.ACTIVE_CHUNKER", "parent_child")
+    retriever = retriever_for("raptor")
+    assert isinstance(retriever, RaptorRetriever)
+    assert not isinstance(retriever, ParentExpandingRetriever)
 
 
 def test_retriever_for_rejects_unknown() -> None:

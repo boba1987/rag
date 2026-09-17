@@ -108,7 +108,7 @@ def test_post_query_echoes_sparse_hybrid_and_rerank_strategy() -> None:
     client = TestClient(
         create_app(retriever=_FakeRetriever(), generator=_FakeGenerator(), extractor=DEFAULT_SCRIPTED)
     )
-    for strategy in ("sparse", "hybrid", "rerank"):
+    for strategy in ("sparse", "hybrid", "rerank", "raptor"):
         response = client.post(
             "/query",
             json={
