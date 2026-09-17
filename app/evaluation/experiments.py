@@ -1,17 +1,21 @@
 from __future__ import annotations
 
 import json
+from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from time import perf_counter
 
 from app.config import (
+    CHUNKER_NAMES,
     DENSE_TOP_K,
     INDEXED_DIR,
+    OPENAI_EMBED_MODEL,
     OPENAI_EMBED_USD_PER_1M,
     OPENAI_INPUT_USD_PER_1M,
     OPENAI_OUTPUT_USD_PER_1M,
+    qdrant_collection,
 )
 from app.evaluation.dataset import load_eval_cases
 from app.evaluation.generation import GenerationScores, mean_generation_scores, score_generation
@@ -68,11 +72,15 @@ def estimate_cost_usd(embed_tokens: int, prompt_tokens: int, completion_tokens: 
     ) / 1_000_000
 
 
+COMPARE_STRATEGIES = ("dense", "sparse", "hybrid", "rerank", "raptor")
+
+
 def run_eval_case(
     case: EvalCase,
     retriever,
     generator,
     k: int = DENSE_TOP_K,
+    generate: bool = True,
 ) -> CaseResult:
     started = perf_counter()
     retrieval_ms = 0.0
@@ -91,23 +99,24 @@ def run_eval_case(
         chunks = retriever.search(case.question, top_k=k)
         retrieval_ms = (perf_counter() - retrieve_started) * 1000
         retrieved_ids = unique_document_ids(chunks)
-        context = build_context(chunks)
-        prompt_tokens = count_tokens(SYSTEM_PROMPT) + count_tokens(user_prompt(case.question, context))
-        generate_started = perf_counter()
-        grounded = generate_grounded_answer(case.question, chunks, generator=generator)
-        llm_ms = (perf_counter() - generate_started) * 1000
-        answer = grounded.answer
-        completion_tokens = count_tokens(answer)
         retrieval_scores = score_retrieval(retrieved_ids, case.expected_documents, k)
-        generation_scores = score_generation(
-            answer=answer,
-            context=context,
-            retrieved_ids=retrieved_ids,
-            expected_ids=case.expected_documents,
-            expected_answer=case.expected_answer,
-            category=case.category,
-            k=k,
-        )
+        if generate:
+            context = build_context(chunks)
+            prompt_tokens = count_tokens(SYSTEM_PROMPT) + count_tokens(user_prompt(case.question, context))
+            generate_started = perf_counter()
+            grounded = generate_grounded_answer(case.question, chunks, generator=generator)
+            llm_ms = (perf_counter() - generate_started) * 1000
+            answer = grounded.answer
+            completion_tokens = count_tokens(answer)
+            generation_scores = score_generation(
+                answer=answer,
+                context=context,
+                retrieved_ids=retrieved_ids,
+                expected_ids=case.expected_documents,
+                expected_answer=case.expected_answer,
+                category=case.category,
+                k=k,
+            )
     except Exception as exc:  # noqa: BLE001 — eval runner must record failures
         error = str(exc)
 
@@ -140,30 +149,35 @@ def run_experiment(
     retriever=None,
     generator=None,
     k: int = DENSE_TOP_K,
+    generate: bool = True,
 ) -> ExperimentReport:
     from app.generation.generator import get_generator
     from app.retrieval.dense import DenseRetriever
 
     rows = cases if cases is not None else load_eval_cases()
     searcher = retriever or DenseRetriever()
-    backend = generator or get_generator()
-    results = [run_eval_case(case, searcher, backend, k=k) for case in rows]
+    backend = (generator or get_generator()) if generate else None
+    results = [run_eval_case(case, searcher, backend, k=k, generate=generate) for case in rows]
     retrieval_scores = [
         score_retrieval(row.retrieved_documents, case.expected_documents, k)
         for row, case in zip(results, rows, strict=True)
         if row.error is None
     ]
-    generation_scores = [
-        GenerationScores(
-            faithfulness=row.generation["faithfulness"],
-            answer_relevance=row.generation["answer_relevance"],
-            context_precision=row.generation["context_precision"],
-            context_recall=row.generation["context_recall"],
-            groundedness=row.generation["groundedness"],
-        )
-        for row in results
-        if row.error is None
-    ]
+    generation_scores = (
+        [
+            GenerationScores(
+                faithfulness=row.generation["faithfulness"],
+                answer_relevance=row.generation["answer_relevance"],
+                context_precision=row.generation["context_precision"],
+                context_recall=row.generation["context_recall"],
+                groundedness=row.generation["groundedness"],
+            )
+            for row in results
+            if row.error is None
+        ]
+        if generate
+        else []
+    )
     errors = sum(1 for row in results if row.error)
     engineering_rows = [row.engineering for row in results]
     return ExperimentReport(
@@ -244,3 +258,93 @@ def _mean_engineering(rows: list[dict], errors: int, total: int) -> dict[str, fl
     means["error_rate"] = errors / total if total else 0.0
     means["cost_usd_total"] = sum(row["cost_usd"] for row in rows)
     return means
+
+
+@dataclass
+class ComparisonReport:
+    ran_at: str
+    embedder: str
+    generate: bool
+    variants: dict[str, ExperimentReport] = field(default_factory=dict)
+    cases: list[EvalCase] = field(default_factory=list)
+
+
+def category_retrieval(results: list[CaseResult], cases: list[EvalCase], k: int) -> dict[str, dict[str, float]]:
+    grouped: dict[str, list[RetrievalScores]] = defaultdict(list)
+    for row, case in zip(results, cases, strict=True):
+        if row.error is not None:
+            continue
+        grouped[case.category].append(score_retrieval(row.retrieved_documents, case.expected_documents, k))
+    return {category: mean_retrieval_scores(scores) for category, scores in sorted(grouped.items())}
+
+
+def strategy_retrievers() -> dict:
+    from app.retrieval import retriever_for
+
+    return {name: retriever_for(name) for name in COMPARE_STRATEGIES}
+
+
+def chunker_retrievers() -> dict:
+    from app.raptor.retrieval import RaptorRetriever
+    from app.retrieval.dense import DenseRetriever
+    from app.retrieval.parent_child import ParentExpandingRetriever
+
+    retrievers: dict = {}
+    for name in CHUNKER_NAMES:
+        dense = DenseRetriever(collection=qdrant_collection(name))
+        retrievers[name] = ParentExpandingRetriever(dense) if name == "parent_child" else dense
+    retrievers["raptor"] = RaptorRetriever()
+    return retrievers
+
+
+def run_comparison(
+    cases: list[EvalCase] | None = None,
+    retrievers: dict | None = None,
+    generator=None,
+    k: int = DENSE_TOP_K,
+    generate: bool = True,
+) -> ComparisonReport:
+    """Run the same golden set on each named retriever. Embedding model is held fixed."""
+    rows = cases if cases is not None else load_eval_cases()
+    variants = retrievers if retrievers is not None else strategy_retrievers()
+    reports = {
+        name: run_experiment(rows, retriever=searcher, generator=generator, k=k, generate=generate)
+        for name, searcher in variants.items()
+    }
+    return ComparisonReport(
+        ran_at=datetime.now(timezone.utc).isoformat(),
+        embedder=OPENAI_EMBED_MODEL,
+        generate=generate,
+        variants=reports,
+        cases=rows,
+    )
+
+
+def write_comparison_report(report: ComparisonReport, path: Path | None = None) -> Path:
+    INDEXED_DIR.mkdir(parents=True, exist_ok=True)
+    target = path or INDEXED_DIR / "eval-compare.json"
+    payload = {
+        "ran_at": report.ran_at,
+        "embedder": report.embedder,
+        "generate": report.generate,
+        "note": "Embedding model held fixed. Titan / BGE-M3 comparison postponed; no Bedrock access.",
+        "variants": {
+            name: {
+                "case_count": variant.case_count,
+                "error_rate": variant.error_rate,
+                "retrieval": variant.retrieval,
+                "generation": variant.generation,
+                "engineering": variant.engineering,
+                "by_category": category_retrieval(variant.cases, report.cases, k=_variant_k(variant)),
+            }
+            for name, variant in report.variants.items()
+        },
+    }
+    target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    return target
+
+
+def _variant_k(variant: ExperimentReport) -> int:
+    if not variant.cases:
+        return DENSE_TOP_K
+    return int(variant.cases[0].retrieval.get("k") or DENSE_TOP_K)
