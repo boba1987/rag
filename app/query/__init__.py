@@ -16,6 +16,7 @@ from app.query.evidence import (
     EvidenceVerdict,
     HeuristicEvidenceChecker,
     OpenAIEvidenceChecker,
+    ABSTAIN_MESSAGE,
     check_evidence,
     get_evidence_checker,
 )
@@ -30,6 +31,7 @@ __all__ = [
     "QueryKind",
     "EvidenceChecker",
     "EvidenceVerdict",
+    "ABSTAIN_MESSAGE",
     "HeuristicEvidenceChecker",
     "OpenAIEvidenceChecker",
     "CorrectiveRetrieval",

@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 from app.api.query import answer_query
 from app.main import create_app
 from app.models.schemas import RetrievedChunk
+from app.query.evidence import ABSTAIN_MESSAGE
 from tests.query.fakes import DEFAULT_SCRIPTED
 
 
@@ -58,6 +59,8 @@ def test_post_query_returns_answer_sources_and_inferred_filters() -> None:
     assert "RingCentral" in body["retrieval"]["preprocess"]["rewritten"]
     assert body["retrieval"]["filters"]["provider"] == "RingCentral"
     assert body["retrieval"]["filters"]["section"] == "Integration"
+    assert body["retrieval"]["evidence"]["sufficient"] is True
+    assert body["retrieval"]["evidence"]["retried"] is False
     assert retriever.last_filters.provider == "RingCentral"
 
 
@@ -153,19 +156,20 @@ def test_answer_query_with_no_hits_stays_dense() -> None:
         def search(self, query: str, top_k: int | None = None, filters=None, infer: bool = False):
             return []
 
-    class _RefuseGenerator:
+    class _BoomGenerator:
         def generate(self, question: str, context: str) -> str:
-            assert context == ""
-            return "I do not know."
+            raise AssertionError("insufficient evidence should abstain without generating")
 
     result = answer_query(
         "What is Zoom Phone's 2020 revenue?",
         retriever=_EmptyRetriever(),
-        generator=_RefuseGenerator(),
+        generator=_BoomGenerator(),
         infer=False,
         extractor=DEFAULT_SCRIPTED,
     )
-    assert result.answer == "I do not know."
+    assert result.answer == ABSTAIN_MESSAGE
     assert result.sources == []
     assert result.retrieval.strategy == "dense"
-    assert result.retrieval.filters is None
+    assert result.retrieval.evidence is not None
+    assert result.retrieval.evidence.sufficient is False
+    assert result.retrieval.evidence.retried is True

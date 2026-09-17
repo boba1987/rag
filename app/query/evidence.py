@@ -37,6 +37,11 @@ _STOP = {
 }
 
 
+ABSTAIN_MESSAGE = (
+    "The knowledge base does not contain enough information to answer this question."
+)
+
+
 class EvidenceVerdict(BaseModel):
     sufficient: bool
     reason: str

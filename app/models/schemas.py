@@ -111,11 +111,19 @@ class QueryPreprocess(BaseModel):
     extractor: ExtractorName = "heuristic"
 
 
+class EvidenceInfo(BaseModel):
+    sufficient: bool
+    reason: str
+    overlap: float = 0.0
+    retried: bool = False
+
+
 class RetrievalInfo(BaseModel):
     strategy: RetrievalStrategy = "dense"
     filters: RetrievalFilters | None = None
     inferred: bool = False
     preprocess: QueryPreprocess | None = None
+    evidence: EvidenceInfo | None = None
 
 
 class QueryResponse(BaseModel):

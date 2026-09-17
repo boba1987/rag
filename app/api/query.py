@@ -2,6 +2,8 @@ from fastapi import APIRouter, Request
 
 from app.generation.generator import generate_grounded_answer, get_generator
 from app.models.schemas import (
+    EvidenceInfo,
+    GroundedAnswer,
     QueryPreprocess,
     QueryRequest,
     QueryResponse,
@@ -9,6 +11,7 @@ from app.models.schemas import (
     RetrievalInfo,
     RetrievalStrategy,
 )
+from app.query.evidence import ABSTAIN_MESSAGE
 from app.query.corrective import retrieve_with_correction
 from app.query.decomposer import expand_queries
 from app.query.extractor import understand_query
@@ -41,13 +44,16 @@ def answer_query(
         extraction=extraction,
         catalog=catalog,
     )
-    grounded = generate_grounded_answer(question, corrected.chunks, generator=generator)
+    if corrected.verdict.sufficient:
+        grounded = generate_grounded_answer(question, corrected.chunks, generator=generator)
+    else:
+        grounded = GroundedAnswer(answer=ABSTAIN_MESSAGE, sources=[])
     return QueryResponse(
         answer=grounded.answer,
         sources=grounded.sources,
         retrieval=RetrievalInfo(
             strategy=strategy,
-            filters=applied,
+            filters=corrected.filters,
             inferred=infer,
             preprocess=QueryPreprocess(
                 kind=extraction.kind,
@@ -56,6 +62,12 @@ def answer_query(
                 providers=extraction.providers,
                 topics=extraction.topics,
                 extractor=extraction.source,
+            ),
+            evidence=EvidenceInfo(
+                sufficient=corrected.verdict.sufficient,
+                reason=corrected.verdict.reason,
+                overlap=corrected.verdict.overlap,
+                retried=corrected.retried,
             ),
         ),
     )
