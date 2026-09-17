@@ -1,4 +1,6 @@
-from app.ingestion.chunker import StructureAwareChunker, count_tokens
+import pytest
+
+from app.ingestion.chunker import FixedSizeChunker, StructureAwareChunker, count_tokens, get_chunker
 from app.models.schemas import NormalizedDocument, Section
 
 
@@ -62,3 +64,43 @@ def test_review_is_single_chunk_with_provider() -> None:
     assert chunks[0].content_type == "review"
     assert chunks[0].provider == "Nextiva"
     assert "Reliable phones." in chunks[0].text
+
+
+def test_fixed_size_keeps_short_document_as_one_chunk() -> None:
+    document = _document(
+        Section(heading="Pricing", heading_path=["Nextiva", "Pricing"], text="Three plans start at $15."),
+        Section(heading="Support", heading_path=["Nextiva", "Support"], text="24/7 phone and chat."),
+    )
+    chunks = FixedSizeChunker(size=50, overlap=5).chunk(document)
+    assert len(chunks) == 1
+    assert chunks[0].id == "provider_8019_fixed_01"
+    assert "Three plans start at $15." in chunks[0].text
+    assert "24/7 phone and chat." in chunks[0].text
+    assert chunks[0].section == "Nextiva"
+
+
+def test_fixed_size_ignores_headings_and_windows_tokens() -> None:
+    chunker = FixedSizeChunker(size=20, overlap=5)
+    text = " ".join(f"word{i}" for i in range(50))
+    document = _document(
+        Section(heading="A", heading_path=["Nextiva", "A"], text=text),
+        Section(heading="B", heading_path=["Nextiva", "B"], text="tail"),
+    )
+    chunks = chunker.chunk(document)
+    assert len(chunks) > 1
+    assert all(count_tokens(chunk.text) <= 20 for chunk in chunks)
+    assert chunks[0].id.endswith("_fixed_01")
+    assert chunks[1].id.endswith("_fixed_02")
+    first_words = chunks[0].text.split()
+    second_words = chunks[1].text.split()
+    assert first_words[-5:] == second_words[:5]
+
+
+def test_get_chunker_selects_fixed_size() -> None:
+    assert isinstance(get_chunker("fixed_size"), FixedSizeChunker)
+    assert isinstance(get_chunker("structure_aware"), StructureAwareChunker)
+
+
+def test_get_chunker_parent_child_not_ready() -> None:
+    with pytest.raises(NotImplementedError, match="ParentChildChunker"):
+        get_chunker("parent_child")

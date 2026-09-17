@@ -5,7 +5,14 @@ import re
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-from app.config import HARD_MAX_TOKENS, OVERLAP_TOKENS, TARGET_MAX_TOKENS, TARGET_MIN_TOKENS, chunked_dir
+from app.config import (
+    ACTIVE_CHUNKER,
+    HARD_MAX_TOKENS,
+    OVERLAP_TOKENS,
+    TARGET_MAX_TOKENS,
+    TARGET_MIN_TOKENS,
+    chunked_dir,
+)
 from app.models.schemas import Chunk, NormalizedDocument, Section
 
 _SLUG_RE = re.compile(r"[^a-zA-Z0-9]+")
@@ -18,7 +25,7 @@ def count_tokens(text: str) -> int:
 
 
 class Chunker(ABC):
-    """Reusable chunking strategy. Later: FixedSize, ParentChild, RAPTOR."""
+    """Reusable chunking strategy. Structure-aware and fixed-size now; parent-child next."""
 
     @abstractmethod
     def chunk(self, document: NormalizedDocument) -> list[Chunk]:
@@ -133,6 +140,60 @@ class StructureAwareChunker(Chunker):
             source_url=document.url,
             updated_at=document.updated_at,
         )
+
+
+class FixedSizeChunker(Chunker):
+    """Token-window baseline. Ignores H2/H3; slides a fixed window over the full body."""
+
+    def __init__(
+        self,
+        size: int = TARGET_MAX_TOKENS,
+        overlap: int = OVERLAP_TOKENS,
+    ) -> None:
+        self.size = max(size, 1)
+        self.overlap = max(overlap, 0)
+
+    def chunk(self, document: NormalizedDocument) -> list[Chunk]:
+        body = "\n\n".join(section.text.strip() for section in document.sections if section.text.strip())
+        words = body.split()
+        if not words:
+            return []
+        step = max(self.size - self.overlap, 1)
+        chunks: list[Chunk] = []
+        for index, start in enumerate(range(0, len(words), step), start=1):
+            piece = words[start : start + self.size]
+            if not piece:
+                continue
+            chunks.append(self._to_chunk(document, " ".join(piece), index))
+            if start + self.size >= len(words):
+                break
+        return chunks
+
+    def _to_chunk(self, document: NormalizedDocument, text: str, index: int) -> Chunk:
+        heading = document.title or "Document"
+        return Chunk(
+            id=f"{document.content_type}_{document.id}_fixed_{index:02d}",
+            document_id=document.id,
+            content_type=document.content_type,
+            provider=document.provider,
+            title=document.title,
+            section=heading,
+            heading_path=[heading],
+            text=text,
+            source_url=document.url,
+            updated_at=document.updated_at,
+        )
+
+
+def get_chunker(name: str | None = None) -> Chunker:
+    chunker = name or ACTIVE_CHUNKER
+    if chunker == "structure_aware":
+        return StructureAwareChunker()
+    if chunker == "fixed_size":
+        return FixedSizeChunker()
+    if chunker == "parent_child":
+        raise NotImplementedError("ParentChildChunker is Phase 9 commit 2.")
+    raise ValueError(f"Unknown chunker: {chunker}")
 
 
 def write_chunks(source_name: str, chunks: list[Chunk], directory: Path | None = None) -> Path:

@@ -1,4 +1,11 @@
-from app.ingestion.chunker import Chunker, StructureAwareChunker, count_tokens, write_chunks
+from app.ingestion.chunker import (
+    Chunker,
+    FixedSizeChunker,
+    StructureAwareChunker,
+    count_tokens,
+    get_chunker,
+    write_chunks,
+)
 from app.ingestion.cleaner import clean_html
 from app.ingestion.embed_text import build_embedding_text
 from app.ingestion.embedder import BedrockTitanEmbedder, Embedder, OpenAIEmbedder, get_embedder
@@ -13,7 +20,9 @@ __all__ = [
     "ContentBlock",
     "Embedder",
     "OpenAIEmbedder",
+    "FixedSizeChunker",
     "StructureAwareChunker",
+    "get_chunker",
     "build_embedding_text",
     "clean_html",
     "count_tokens",
