@@ -139,8 +139,13 @@ def test_answer_query_decomposes_multi_hop_into_subqueries() -> None:
     )
     assert result.retrieval.preprocess is not None
     assert result.retrieval.preprocess.kind == "multi-hop"
-    assert len(result.retrieval.preprocess.queries) == 4
-    assert retriever.queries == result.retrieval.preprocess.queries
+    assert result.retrieval.preprocess.queries[:4] == [
+        "RingCentral pricing",
+        "Nextiva pricing",
+        "RingCentral Salesforce integration",
+        "Nextiva Salesforce integration",
+    ]
+    assert retriever.queries[:4] == result.retrieval.preprocess.queries[:4]
 
 
 def test_answer_query_with_no_hits_stays_dense() -> None:

@@ -10,6 +10,7 @@ from app.query.extractor import (
     get_extractor,
     understand_query,
 )
+from app.query.corrective import CorrectiveRetrieval, retrieve_with_correction
 from app.query.evidence import (
     EvidenceChecker,
     EvidenceVerdict,
@@ -31,7 +32,9 @@ __all__ = [
     "EvidenceVerdict",
     "HeuristicEvidenceChecker",
     "OpenAIEvidenceChecker",
+    "CorrectiveRetrieval",
     "check_evidence",
+    "retrieve_with_correction",
     "classify_query",
     "get_evidence_checker",
     "decompose_query",
