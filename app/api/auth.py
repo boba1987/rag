@@ -40,7 +40,7 @@ def api_keys_match(provided: str, expected: str) -> bool:
 
 
 def is_public_path(path: str) -> bool:
-    return path.rstrip("/") in {"/docs", "/redoc", "/openapi.json"} or path == "/docs/oauth2-redirect"
+    return path.rstrip("/") in {"/docs", "/redoc", "/openapi.json", "/health"} or path == "/docs/oauth2-redirect"
 
 
 class ApiKeyMiddleware(BaseHTTPMiddleware):

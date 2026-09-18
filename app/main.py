@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from app.api.auth import ApiKeyMiddleware
+from app.api.health import router as health_router
 from app.api.query import router
 
 
@@ -14,6 +15,7 @@ def create_app(retriever=None, generator=None, extractor=None) -> FastAPI:
     application.state.retriever = retriever
     application.state.generator = generator
     application.state.extractor = extractor
+    application.include_router(health_router)
     application.include_router(router)
     return application
 

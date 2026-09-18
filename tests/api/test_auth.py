@@ -52,7 +52,7 @@ def test_docs_and_openapi_are_public() -> None:
     payload = spec.json()
     example = payload["components"]["schemas"]["QueryRequest"]["example"]
     assert example == {
-        "query": "who is better for startups nextiva or dialpad?",
+            "query": "who is better for startups Nextiva or Dialpad?",
         "strategy": "rerank",
     }
     scheme = payload["components"]["securitySchemes"]["APIKeyHeader"]
@@ -64,6 +64,8 @@ def test_docs_and_openapi_are_public() -> None:
     }
     assert {"APIKeyHeader": []} in payload["paths"]["/query"]["post"].get("security", [])
     assert raw.get("/redoc").status_code == 200
+    assert raw.get("/health").status_code == 200
+    assert raw.get("/health").json() == {"status": "ok"}
     assert raw.post("/query", json={"query": "Does RingCentral integrate with Salesforce?"}).status_code == 401
 
 
