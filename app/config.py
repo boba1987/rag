@@ -58,6 +58,7 @@ TARGET_MAX_TOKENS = 700
 HARD_MAX_TOKENS = 1000
 OVERLAP_TOKENS = 80
 
+API_KEY = os.getenv("API_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_EMBED_MODEL = os.getenv("OPENAI_EMBED_MODEL", "text-embedding-3-small")
 OPENAI_CHAT_MODEL = os.getenv("OPENAI_CHAT_MODEL", "gpt-4.1-mini")

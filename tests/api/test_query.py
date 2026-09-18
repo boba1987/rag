@@ -1,7 +1,6 @@
-from fastapi.testclient import TestClient
-
 from app.api.query import answer_query
 from app.main import create_app
+from tests.api.conftest import AuthedClient
 from app.models.schemas import QueryResponse, RetrievedChunk
 from app.query.evidence import ABSTAIN_MESSAGE
 from tests.query.fakes import DEFAULT_SCRIPTED
@@ -38,7 +37,7 @@ class _FakeGenerator:
 
 def test_post_query_returns_answer_sources_and_inferred_filters() -> None:
     retriever = _FakeRetriever()
-    client = TestClient(
+    client = AuthedClient(
         create_app(retriever=retriever, generator=_FakeGenerator(), extractor=DEFAULT_SCRIPTED)
     )
     response = client.post("/query", json={"query": "Does RingCentral integrate with Salesforce?"})
@@ -66,7 +65,7 @@ def test_post_query_returns_answer_sources_and_inferred_filters() -> None:
 
 def test_post_query_explicit_filters_override_inference() -> None:
     retriever = _FakeRetriever()
-    client = TestClient(
+    client = AuthedClient(
         create_app(retriever=retriever, generator=_FakeGenerator(), extractor=DEFAULT_SCRIPTED)
     )
     response = client.post(
@@ -83,7 +82,7 @@ def test_post_query_explicit_filters_override_inference() -> None:
 
 def test_post_query_can_disable_inference() -> None:
     retriever = _FakeRetriever()
-    client = TestClient(
+    client = AuthedClient(
         create_app(retriever=retriever, generator=_FakeGenerator(), extractor=DEFAULT_SCRIPTED)
     )
     response = client.post(
@@ -97,7 +96,7 @@ def test_post_query_can_disable_inference() -> None:
 
 
 def test_post_query_rejects_empty_query() -> None:
-    client = TestClient(
+    client = AuthedClient(
         create_app(retriever=_FakeRetriever(), generator=_FakeGenerator(), extractor=DEFAULT_SCRIPTED)
     )
     response = client.post("/query", json={"query": ""})
@@ -105,7 +104,7 @@ def test_post_query_rejects_empty_query() -> None:
 
 
 def test_post_query_echoes_sparse_hybrid_and_rerank_strategy() -> None:
-    client = TestClient(
+    client = AuthedClient(
         create_app(retriever=_FakeRetriever(), generator=_FakeGenerator(), extractor=DEFAULT_SCRIPTED)
     )
     for strategy in ("sparse", "hybrid", "rerank", "raptor"):
@@ -121,7 +120,7 @@ def test_post_query_echoes_sparse_hybrid_and_rerank_strategy() -> None:
 
 
 def test_post_query_rejects_unknown_strategy() -> None:
-    client = TestClient(
+    client = AuthedClient(
         create_app(retriever=_FakeRetriever(), generator=_FakeGenerator(), extractor=DEFAULT_SCRIPTED)
     )
     response = client.post(
