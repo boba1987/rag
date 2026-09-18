@@ -70,6 +70,25 @@ def test_upsert_sends_points_in_batches(monkeypatch) -> None:
     assert client.sizes == [2, 2, 1]
 
 
+def test_qdrant_client_passes_api_key(monkeypatch) -> None:
+    captured: dict = {}
+
+    def fake_client(**kwargs):
+        captured.update(kwargs)
+        return object()
+
+    monkeypatch.setattr("app.ingestion.indexer.QdrantClient", fake_client)
+    monkeypatch.setattr("app.ingestion.indexer.QDRANT_API_KEY", "secret-key")
+    from app.ingestion.indexer import get_qdrant_client
+
+    get_qdrant_client(url="https://example.test")
+    assert captured["url"] == "https://example.test"
+    assert captured["api_key"] == "secret-key"
+
+    get_qdrant_client(url="http://127.0.0.1:6333", api_key="")
+    assert captured["api_key"] is None
+
+
 def test_upsert_roundtrip_in_memory() -> None:
     client = QdrantClient(":memory:")
     embedder = _FakeEmbedder()

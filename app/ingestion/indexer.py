@@ -13,6 +13,7 @@ from qdrant_client.http.models import Distance, PointStruct, VectorParams
 from app.config import (
     INDEXED_DIR,
     OPENAI_EMBED_DIMENSIONS,
+    QDRANT_API_KEY,
     QDRANT_COLLECTION,
     QDRANT_COLLECTIONS,
     QDRANT_TIMEOUT,
@@ -28,8 +29,17 @@ def chunk_point_id(chunk_id: str) -> str:
     return str(uuid5(NAMESPACE_URL, f"getvoip-rag:{chunk_id}"))
 
 
-def get_qdrant_client(url: str = QDRANT_URL) -> QdrantClient:
-    return QdrantClient(url=url, timeout=QDRANT_TIMEOUT, check_compatibility=False)
+def get_qdrant_client(
+    url: str = QDRANT_URL,
+    api_key: str | None = None,
+) -> QdrantClient:
+    key = QDRANT_API_KEY if api_key is None else api_key
+    return QdrantClient(
+        url=url,
+        api_key=key or None,
+        timeout=QDRANT_TIMEOUT,
+        check_compatibility=False,
+    )
 
 
 def ensure_chunker_collections(
