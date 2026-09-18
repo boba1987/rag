@@ -34,7 +34,7 @@ def _chunked_document_ids() -> set[str]:
 
 def test_loads_the_current_golden_set() -> None:
     cases = load_eval_cases()
-    assert len(cases) == 25
+    assert len(cases) == 50
     assert cases[0].id == "eval_001"
     assert "NICE CXone pricing" in cases[0].question
 

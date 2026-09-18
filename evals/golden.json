@@ -195,7 +195,7 @@
       "106730",
       "8541"
     ],
-    "expected_answer": "The article lists $110–$249 per agent/month plus $0.25 per session on Ultimate. The provider page lists plans from $71 to $209 monthly per user.",
+    "expected_answer": "The article lists $110\u2013$249 per agent/month plus $0.25 per session on Ultimate. The provider page lists plans from $71 to $209 monthly per user.",
     "category": "multi-hop"
   },
   {
@@ -220,5 +220,230 @@
     "expected_documents": [],
     "expected_answer": "The indexed GetVoIP corpus does not contain Slack's 2018 IPO opening price.",
     "category": "unanswerable"
+  },
+  {
+    "id": "eval_026",
+    "question": "In the Five9 vs Dialpad comparison, who should choose Five9 and who should choose Dialpad?",
+    "expected_documents": [
+      "106805"
+    ],
+    "expected_answer": "Choose Five9 for a large or outbound-heavy contact center that needs robust dialers, forecasting and scheduling, and compliance tooling. Choose Dialpad for unified voice, messaging, and native AI at a lower total cost, with deployment in hours rather than weeks.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_027",
+    "question": "How do Five9 and Nextiva differ as platforms in the Five9 vs Nextiva comparison?",
+    "expected_documents": [
+      "102390"
+    ],
+    "expected_answer": "Five9 is a CCaaS provider while Nextiva offers both UCaaS and CCaaS plans. Five9 excels in customizability with over 120 reporting templates and 5 auto-dialing modes, while Nextiva has a better video conferencing platform and more website management tools.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_028",
+    "question": "Does Talkdesk or Nextiva offer better overall value according to the Talkdesk vs Nextiva article?",
+    "expected_documents": [
+      "102105"
+    ],
+    "expected_answer": "Though Nextiva is the more expensive option, the article says it offers better overall value than Talkdesk because WFM and CX analytics are built in, while Talkdesk offers those only as paid add-ons. Talkdesk is the pick for enterprise teams that want industry-specific Experience Clouds.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_029",
+    "question": "How do NICE CXone and Nextiva compare on price and who each is best for?",
+    "expected_documents": [
+      "102025"
+    ],
+    "expected_answer": "Nextiva is more affordable than NICE CXone and has more flexible pricing. NICE CXone is best for global enterprises with high daily contact volume, while Nextiva has packages for small businesses and enterprises and includes built-in UCaaS tools.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_030",
+    "question": "What is the difference between Aircall and Dialpad in the Aircall vs Dialpad comparison?",
+    "expected_documents": [
+      "99744"
+    ],
+    "expected_answer": "Aircall is a basic, user-friendly business phone system for small in-house teams with high daily call volume. Dialpad AI Voice is an all-in-one call center and unified communications platform that combines voice, SMS, video conferencing, and collaboration in one interface.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_031",
+    "question": "When should you use NiCE CXone versus Genesys Cloud?",
+    "expected_documents": [
+      "99555"
+    ],
+    "expected_answer": "NiCE CXone is best for advanced AI-powered WFM, digital-first high-volume contact centers, and global centers that want predictive routing. Genesys is best for teams that need built-in UCaaS, enterprise sales teams automating outbound engagement, and contact centers with advanced third-party integration needs.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_032",
+    "question": "How do RingCentral and Dialpad compare on collaboration versus analytics?",
+    "expected_documents": [
+      "84007"
+    ],
+    "expected_answer": "RingCentral provides better internal team collaboration, including AI-enhanced video for up to 200 participants, webinars, and GenAI chat. Dialpad offers stronger real-time and conversational analytics, AI call summaries, and business text messaging. Choose RingCentral for extensive third-party integrations and Dialpad for priority support and complex call routing.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_033",
+    "question": "Who is RingCentral better for versus Nextiva in the 2026 RingCentral vs Nextiva test?",
+    "expected_documents": [
+      "69005"
+    ],
+    "expected_answer": "RingCentral RingEX is best for voice-first teams that need AI analytics to scale call center operations. Nextiva is best for digital-first teams that engage customers on social, chat, reviews, and email more than phone, and it is cheaper at the entry level and easier to set up.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_034",
+    "question": "How do Dialpad and Nextiva compare as UCaaS platforms?",
+    "expected_documents": [
+      "86208"
+    ],
+    "expected_answer": "Dialpad is aimed at tech-savvy growing teams and leads with AI such as real-time transcription, sentiment analysis, and voice intelligence. Nextiva is the pick for organizations that want scale, customer support, comprehensive analytics, built-in CRM, and reliability, with AI centered more on fundamentals.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_035",
+    "question": "Which is cheaper and who should pick Aircall versus RingCentral?",
+    "expected_documents": [
+      "86572"
+    ],
+    "expected_answer": "RingCentral is more affordable, with RingEX starting at $20 per user per month versus $30 per user per month for Aircall. Choose RingCentral for voice, video, messaging, SMS, and collaboration in one system. Choose Aircall for a simpler, call-focused platform with stronger outbound tools.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_036",
+    "question": "How do RingCentral and Zoom compare on communication channels?",
+    "expected_documents": [
+      "82587"
+    ],
+    "expected_answer": "Zoom is better for companies that need phone plus chat or video plus chat. RingCentral is better for teams that need phone, video, and chat in one platform, and it includes all three on every unified communications plan. Zoom offers advanced phone features at a lower price.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_037",
+    "question": "What distinct advantages do Five9 and NICE CXone have over each other?",
+    "expected_documents": [
+      "90048"
+    ],
+    "expected_answer": "Five9 excels in outbound calling with 6 types of auto dialer. NICE CXone offers an intuitive drag-and-drop chatbot builder for nuanced self-service. Both are omnichannel CCaaS platforms for large contact centers.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_038",
+    "question": "Is Talkdesk or Five9 more affordable, and which is more feature-rich?",
+    "expected_documents": [
+      "86077"
+    ],
+    "expected_answer": "Talkdesk is more affordable than Five9, has more transparent pricing, and offers 5 industry-specific packages. Five9 is more expensive but more feature-rich, with deeper analytics via AI Insights and more advanced outbound auto dialers.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_039",
+    "question": "When should you use Five9 versus RingCentral?",
+    "expected_documents": [
+      "79287"
+    ],
+    "expected_answer": "Five9 is best for outbound call centers that need multiple auto-dialer modes, workforce engagement tools, and workflow automation. RingCentral is best for financial firms needing end-to-end encryption, healthcare offices that need HIPAA compliance, and growing businesses with large call volumes and high-participant video meetings. RingCentral starts at a lower price.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_040",
+    "question": "Who should choose Zoom versus Dialpad for business communications?",
+    "expected_documents": [
+      "84508"
+    ],
+    "expected_answer": "Zoom is better for remote or hybrid teams that need enterprise video conferencing, collaboration, high-level integrations, and scalable voice. Dialpad is best for small call centers that want an all-in-one UCaaS solution with advanced call management, AI analytics, and strong support. Zoom has cheaper, more flexible plans; Dialpad plans include a more robust feature set.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_041",
+    "question": "How do RingCentral and Vonage compare as UCaaS providers?",
+    "expected_documents": [
+      "82804"
+    ],
+    "expected_answer": "RingCentral excels in security, analytics, and included features. Vonage provides superior flexibility and ease of use. RingCentral has a three-tier structure starting at $20 per user per month, while Vonage offers more add-on features for customizability.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_042",
+    "question": "Who is Vonage better for versus Nextiva, and how do their plan prices compare?",
+    "expected_documents": [
+      "84822"
+    ],
+    "expected_answer": "Vonage is best for startups or small businesses and for cost-conscious companies with a global client base. Nextiva is suited for mid-size and large businesses that need advanced features, analytics, CRM integrations, and 24/7 support. Vonage lists three paid plans from $19.99 to $39.99 per month; Nextiva lists three paid plans from $15 to $75 per month.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_043",
+    "question": "What are the key differences between 8x8 and Nextiva?",
+    "expected_documents": [
+      "71019"
+    ],
+    "expected_answer": "8x8 covers more countries for international calling and has contact center capabilities, with quote-based pricing. Nextiva focuses on a single platform for apps, AI, automation, and social/reputation management, with published pricing from $15 to $75 per user per month.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_044",
+    "question": "How do RingCentral and 8x8 compare on price, texting, and international calling?",
+    "expected_documents": [
+      "89062"
+    ],
+    "expected_answer": "RingCentral\u2019s plans are generally cheaper and include more comprehensive team chat. 8x8 is costlier but offers a much larger unlimited calling area and unlimited texting, while RingCentral imposes restrictive monthly SMS limits. Choose RingCentral for call routing and collaboration; choose 8x8 for unlimited texting and international calling.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_045",
+    "question": "Should a global company pick 8x8 or Vonage?",
+    "expected_documents": [
+      "71113"
+    ],
+    "expected_answer": "The article says there is no better solution for global companies than 8x8 because of its wide coverage. Domestic companies may fare better with Vonage\u2019s pricing and features. 8x8 is quote-based; Vonage lists $13.99 to $27.99 per user per month.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_046",
+    "question": "How do 8x8 and Dialpad compare for SMBs versus enterprises?",
+    "expected_documents": [
+      "101430"
+    ],
+    "expected_answer": "Dialpad is significantly less expensive and is best for SMBs that need team collaboration plus a solid business phone system. 8x8 is best for enterprises that need security and reliability, with better video conferencing, hot desking, unlimited online faxing, and listen/whisper/barge. Global enterprises can get unlimited calling in over 48 countries with 8x8.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_047",
+    "question": "When should you use Dialpad instead of Google Voice?",
+    "expected_documents": [
+      "95669"
+    ],
+    "expected_answer": "Use Dialpad if you want AI-powered features, are growing faster than you can hire, need a scalable path to an omnichannel contact center, or need video, team chat, and file sharing. Use Google Voice if you are a solopreneur, startup, or small business with fewer than 5 employees, want a simple virtual number in Google Workspace, or just need a separate business number.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_048",
+    "question": "What is the difference between UCaaS and CCaaS, and how do typical monthly costs compare?",
+    "expected_documents": [
+      "77259"
+    ],
+    "expected_answer": "UCaaS focuses on internal team communication and collaboration; CCaaS focuses on customer service. UCaaS platforms are cheaper and easier to use, typically $20 to $40 per user per month, while CCaaS has more channels and features and typically costs $75 to $200 per user per month.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_049",
+    "question": "How does an omnichannel contact center differ from a multichannel contact center?",
+    "expected_documents": [
+      "98124"
+    ],
+    "expected_answer": "Both use multiple channels such as phone, SMS, live chat, and email. Omnichannel unifies those channels into one customer journey with a unified agent desktop. Multichannel isolates each touchpoint as a distinct interaction, so agents have a more siloed view. Typical cost is $125\u2013$225 per user per month for omnichannel versus $75\u2013$175 for multichannel.",
+    "category": "comparison"
+  },
+  {
+    "id": "eval_050",
+    "question": "How does an AI receptionist differ from IVR, and when does IVR still win?",
+    "expected_documents": [
+      "106558"
+    ],
+    "expected_answer": "IVR routes callers through pre-recorded menus with keypad presses or simple voice input. An AI receptionist answers in natural language, understands the request, and can finish the task. IVR still wins when the job is predictable high-volume routing to the right department at low cost; stacked menus raise abandonment (6.1% at one menu up to 27.3% at four).",
+    "category": "comparison"
   }
 ]

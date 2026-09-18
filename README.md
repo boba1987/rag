@@ -51,7 +51,7 @@ Generation is grounded in retrieved passages only. The response includes citatio
 
 ### Evaluation and tracing
 
-`evals/golden.json` holds 25 manually written cases (`eval_001`–`eval_025`) for the current corpus. `rag-eval --compare` scores dense / sparse / hybrid / rerank (Recall@K, Precision@K, MRR, nDCG, generation metrics). `--compare-chunkers` compares dense retrieval across chunker collections.
+`evals/golden.json` holds 50 manually written cases (`eval_001`–`eval_050`) for the current corpus, including 25 added comparison questions. `rag-eval --compare` scores dense / sparse / hybrid / rerank (Recall@K, Precision@K, MRR, nDCG, generation metrics). `--compare-chunkers` compares dense retrieval across chunker collections.
 
 Langfuse records `rag.query`, `query.classify`, `query.rewrite`, `retrieval`, `evidence`, and `generation` / abstain. Rerank is part of the retrieval span, not a separate span.
 
@@ -146,7 +146,7 @@ Swagger Authorize uses `X-API-Key`. Example body: `{ "query": "who is better for
 
 | File | What it owns |
 | --- | --- |
-| `evals/golden.json` | 25 golden cases |
+| `evals/golden.json` | 50 golden cases |
 | `app/evaluation/dataset.py` | Load eval cases |
 | `app/evaluation/retrieval.py` | Recall@K, Precision@K, MRR, nDCG |
 | `app/evaluation/generation.py` | Generation / engineering metrics |
