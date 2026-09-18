@@ -1,6 +1,6 @@
 # VoIP RAG
 
-Standalone Retrieval-Augmented Generation service over GetVoIP WordPress content: articles, user reviews, and provider pages. It answers questions with citations from Qdrant.
+Standalone Retrieval-Augmented Generation service over VoIP WordPress content: articles, user reviews, and provider pages. It answers questions with citations from Qdrant.
 
 **Stack:** Python 3.12+, FastAPI, Pydantic, OpenAI (`text-embedding-3-small` for embeddings, GPT for extract / rewrite / rerank / generation), Qdrant 1.13, LangGraph for orchestration only, Langfuse for traces.
 
@@ -292,16 +292,16 @@ Used by `python -m app.ingestion.export_fixtures` (not by the API):
 | `MYSQL_PORT` | MySQL port | `3306` |
 | `MYSQL_USER` | MySQL user | `root` |
 | `MYSQL_PASSWORD` | MySQL password | empty |
-| `MYSQL_DATABASE` | Database name | `getvoip` |
+| `MYSQL_DATABASE` | Database name | `voip` |
 
 ### Optional — collections and chunking
 
 | Variable | Purpose | Default |
 | --- | --- | --- |
 | `CHUNKER` | Active chunker / default collection: `structure_aware`, `fixed_size`, `parent_child` | `structure_aware` |
-| `QDRANT_COLLECTION` | Structure-aware collection | `getvoip_chunks_structure_aware` |
-| `QDRANT_COLLECTION_FIXED` | Fixed-size collection | `getvoip_chunks_fixed` |
-| `QDRANT_COLLECTION_PARENT_CHILD` | Parent-child collection | `getvoip_chunks_parent_child` |
+| `QDRANT_COLLECTION` | Structure-aware collection | `voip_chunks_structure_aware` |
+| `QDRANT_COLLECTION_FIXED` | Fixed-size collection | `tvoip_chunks_fixed` |
+| `QDRANT_COLLECTION_PARENT_CHILD` | Parent-child collection | `voip_chunks_parent_child` |
 | `QDRANT_SOURCE_URL` | Source URL for `rag-push` | `http://127.0.0.1:6333` |
 | `QDRANT_TIMEOUT` | Upsert timeout (seconds) | `60` |
 | `QDRANT_UPSERT_BATCH` | Points per upsert batch | `32` |
