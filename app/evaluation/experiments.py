@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 from collections import defaultdict
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -25,6 +26,8 @@ from app.generation.generator import generate_grounded_answer
 from app.generation.prompts import SYSTEM_PROMPT, user_prompt
 from app.ingestion.chunker import count_tokens
 from app.models.schemas import EvalCase
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -150,6 +153,7 @@ def run_experiment(
     generator=None,
     k: int = DENSE_TOP_K,
     generate: bool = True,
+    label: str | None = None,
 ) -> ExperimentReport:
     from app.generation.generator import get_generator
     from app.retrieval.dense import DenseRetriever
@@ -157,7 +161,22 @@ def run_experiment(
     rows = cases if cases is not None else load_eval_cases()
     searcher = retriever or DenseRetriever()
     backend = (generator or get_generator()) if generate else None
-    results = [run_eval_case(case, searcher, backend, k=k, generate=generate) for case in rows]
+    prefix = label or "eval"
+    results: list[CaseResult] = []
+    for index, case in enumerate(rows, 1):
+        logger.info("%s case %s/%s %s — %s", prefix, index, len(rows), case.id, case.question)
+        result = run_eval_case(case, searcher, backend, k=k, generate=generate)
+        results.append(result)
+        if result.error:
+            logger.warning("%s case %s failed: %s", prefix, case.id, result.error)
+        else:
+            logger.info(
+                "%s case %s done recall=%.3f %.0fms",
+                prefix,
+                case.id,
+                result.retrieval.get("recall_at_k") or 0.0,
+                result.engineering.get("end_to_end_ms") or 0.0,
+            )
     retrieval_scores = [
         score_retrieval(row.retrieved_documents, case.expected_documents, k)
         for row, case in zip(results, rows, strict=True)
@@ -281,7 +300,12 @@ def category_retrieval(results: list[CaseResult], cases: list[EvalCase], k: int)
 def strategy_retrievers() -> dict:
     from app.retrieval import retriever_for
 
-    return {name: retriever_for(name) for name in COMPARE_STRATEGIES}
+    retrievers = {}
+    for name in COMPARE_STRATEGIES:
+        logger.info("Loading retriever %s", name)
+        retrievers[name] = retriever_for(name)
+        logger.info("Loaded retriever %s", name)
+    return retrievers
 
 
 def chunker_retrievers() -> dict:
@@ -291,9 +315,13 @@ def chunker_retrievers() -> dict:
 
     retrievers: dict = {}
     for name in CHUNKER_NAMES:
+        logger.info("Loading chunker retriever %s", name)
         dense = DenseRetriever(collection=qdrant_collection(name))
         retrievers[name] = ParentExpandingRetriever(dense) if name == "parent_child" else dense
+        logger.info("Loaded chunker retriever %s", name)
+    logger.info("Loading retriever raptor")
     retrievers["raptor"] = RaptorRetriever()
+    logger.info("Loaded retriever raptor")
     return retrievers
 
 
@@ -307,10 +335,33 @@ def run_comparison(
     """Run the same golden set on each named retriever. Embedding model is held fixed."""
     rows = cases if cases is not None else load_eval_cases()
     variants = retrievers if retrievers is not None else strategy_retrievers()
-    reports = {
-        name: run_experiment(rows, retriever=searcher, generator=generator, k=k, generate=generate)
-        for name, searcher in variants.items()
-    }
+    logger.info(
+        "Comparing %s variants on %s cases (generate=%s)",
+        len(variants),
+        len(rows),
+        generate,
+    )
+    reports = {}
+    for index, (name, searcher) in enumerate(variants.items(), 1):
+        logger.info("[%s/%s] Starting variant %s", index, len(variants), name)
+        reports[name] = run_experiment(
+            rows,
+            retriever=searcher,
+            generator=generator,
+            k=k,
+            generate=generate,
+            label=name,
+        )
+        variant = reports[name]
+        logger.info(
+            "[%s/%s] Finished variant %s recall=%.3f mrr=%.3f errors=%.0f%%",
+            index,
+            len(variants),
+            name,
+            variant.retrieval.get("recall_at_k") or 0.0,
+            variant.retrieval.get("mrr") or 0.0,
+            variant.error_rate * 100,
+        )
     return ComparisonReport(
         ran_at=datetime.now(timezone.utc).isoformat(),
         embedder=OPENAI_EMBED_MODEL,

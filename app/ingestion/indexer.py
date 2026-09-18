@@ -1,11 +1,13 @@
 from __future__ import annotations
 
 import json
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import NAMESPACE_URL, uuid5
 
 from qdrant_client import QdrantClient
+from qdrant_client.http.exceptions import ResponseHandlingException
 from qdrant_client.http.models import Distance, PointStruct, VectorParams
 
 from app.config import (
@@ -13,9 +15,13 @@ from app.config import (
     OPENAI_EMBED_DIMENSIONS,
     QDRANT_COLLECTION,
     QDRANT_COLLECTIONS,
+    QDRANT_TIMEOUT,
+    QDRANT_UPSERT_BATCH,
     QDRANT_URL,
 )
 from app.models.schemas import Chunk
+
+_UPSERT_RETRIES = 3
 
 
 def chunk_point_id(chunk_id: str) -> str:
@@ -23,7 +29,7 @@ def chunk_point_id(chunk_id: str) -> str:
 
 
 def get_qdrant_client(url: str = QDRANT_URL) -> QdrantClient:
-    return QdrantClient(url=url, check_compatibility=False)
+    return QdrantClient(url=url, timeout=QDRANT_TIMEOUT, check_compatibility=False)
 
 
 def ensure_chunker_collections(
@@ -101,9 +107,45 @@ def upsert_chunks(
         )
         for chunk, vector in zip(chunks, vectors, strict=True)
     ]
-    if points:
-        qdrant.upsert(collection_name=collection, points=points)
+    upsert_points(qdrant, collection, points)
     return len(points)
+
+
+def upsert_points(
+    client: QdrantClient,
+    collection: str,
+    points: list[PointStruct],
+    batch_size: int | None = None,
+) -> None:
+    """Write points in small batches so a long article does not trip the HTTP timeout."""
+    if not points:
+        return
+    size = batch_size or QDRANT_UPSERT_BATCH
+    for start in range(0, len(points), size):
+        _upsert_batch(client, collection, points[start : start + size])
+
+
+def _upsert_batch(client: QdrantClient, collection: str, points: list[PointStruct]) -> None:
+    timeout = int(QDRANT_TIMEOUT)
+    last_error: Exception | None = None
+    for attempt in range(_UPSERT_RETRIES):
+        try:
+            client.upsert(collection_name=collection, points=points, timeout=timeout)
+            return
+        except TypeError:
+            client.upsert(collection_name=collection, points=points)
+            return
+        except ResponseHandlingException as exc:
+            last_error = exc
+            if not _is_timeout(exc) or attempt == _UPSERT_RETRIES - 1:
+                raise
+            time.sleep(1.0 * (attempt + 1))
+    if last_error is not None:
+        raise last_error
+
+
+def _is_timeout(exc: Exception) -> bool:
+    return "timed out" in str(exc).lower() or "timeout" in str(exc).lower()
 
 
 def write_index_report(report: dict, path: Path | None = None) -> Path:

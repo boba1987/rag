@@ -50,6 +50,26 @@ def test_point_id_is_stable() -> None:
     assert chunk_point_id(_CHUNK.id) != chunk_point_id("provider_8015_pricing_01")
 
 
+class _RecordingClient:
+    def __init__(self) -> None:
+        self.sizes: list[int] = []
+
+    def collection_exists(self, name: str) -> bool:
+        return True
+
+    def upsert(self, collection_name: str, points, timeout=None) -> None:
+        self.sizes.append(len(points))
+
+
+def test_upsert_sends_points_in_batches(monkeypatch) -> None:
+    monkeypatch.setattr("app.ingestion.indexer.QDRANT_UPSERT_BATCH", 2)
+    chunks = [_CHUNK.model_copy(update={"id": f"{_CHUNK.id}_{index}"}) for index in range(5)]
+    vectors = [[0.1, 0.2, 0.3, 0.4] for _ in chunks]
+    client = _RecordingClient()
+    assert upsert_chunks(chunks, vectors, 4, client=client, collection="batched") == 5
+    assert client.sizes == [2, 2, 1]
+
+
 def test_upsert_roundtrip_in_memory() -> None:
     client = QdrantClient(":memory:")
     embedder = _FakeEmbedder()

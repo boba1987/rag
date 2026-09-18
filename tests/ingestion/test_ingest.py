@@ -19,7 +19,7 @@ class _FakeClient:
     def create_collection(self, collection_name: str, vectors_config) -> None:
         self.collections[collection_name] = 0
 
-    def upsert(self, collection_name: str, points) -> None:
+    def upsert(self, collection_name: str, points, **kwargs) -> None:
         self.collections[collection_name] = self.collections.get(collection_name, 0) + len(points)
 
 

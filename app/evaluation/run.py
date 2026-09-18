@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 
 from app.evaluation.dataset import load_eval_cases
@@ -15,7 +16,18 @@ from app.evaluation.experiments import (
 )
 
 
+def _configure_logging() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(message)s",
+        datefmt="%H:%M:%S",
+        stream=sys.stderr,
+        force=True,
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
+    _configure_logging()
     parser = argparse.ArgumentParser(
         description="Run golden-set eval. Embedding model is held fixed (OpenAI); Bedrock bake-off is postponed."
     )
@@ -56,6 +68,13 @@ def main(argv: list[str] | None = None) -> int:
         cases = cases[: args.limit]
 
     generate = not args.retrieval_only
+    logging.getLogger("app.evaluation").info(
+        "Eval starting cases=%s generate=%s compare=%s compare_chunkers=%s",
+        len(cases),
+        generate,
+        args.compare,
+        args.compare_chunkers,
+    )
     if args.compare or args.compare_chunkers:
         retrievers = chunker_retrievers() if args.compare_chunkers else strategy_retrievers()
         report = run_comparison(cases, retrievers=retrievers, generate=generate)

@@ -25,6 +25,7 @@ from app.ingestion.indexer import (
     chunk_point_id,
     ensure_collection,
     get_qdrant_client,
+    upsert_points,
     write_index_report,
 )
 from app.models.schemas import Chunk
@@ -106,8 +107,7 @@ def upsert_raptor_nodes(
         )
         for node, vector in zip(nodes, vectors, strict=True)
     ]
-    if points:
-        qdrant.upsert(collection_name=collection, points=points)
+    upsert_points(qdrant, collection, points)
     return len(points)
 
 
