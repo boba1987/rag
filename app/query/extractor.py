@@ -20,7 +20,10 @@ _KINDS: tuple[QueryKind, ...] = (
 )
 _SYSTEM = (
     "Extract retrieval intent from a knowledge-base question. "
-    "Use only the allowed providers. Topics must appear in the index headings or body. "
+    "Use only allowed providers that are named in the question. "
+    "If the question names a vendor that is not in the allowed list, leave providers empty. "
+    "Do not substitute a different allowed provider. "
+    "Topics must appear in the index headings or body. "
     "Reply with JSON: {\"kind\": \"...\", \"providers\": [], \"topics\": []}."
 )
 
@@ -77,7 +80,7 @@ class OpenAIExtractor(QueryExtractor):
         try:
             payload = json.loads(self._complete(query, source))
             extracted = QueryExtraction.model_validate({**payload, "source": "openai"})
-            return constrain_extraction(extracted, source)
+            return constrain_extraction(extracted, source, query)
         except Exception:
             return self._fallback.extract(query, source)
 
@@ -103,13 +106,23 @@ class BedrockExtractor(QueryExtractor):
         )
 
 
-def constrain_extraction(extraction: QueryExtraction, catalog: QueryCatalog) -> QueryExtraction:
+def constrain_extraction(
+    extraction: QueryExtraction,
+    catalog: QueryCatalog,
+    query: str = "",
+) -> QueryExtraction:
     allowed_providers = {name.lower(): name for name in catalog.providers}
+    mentioned = set(catalog.match_providers(query)) if query else None
     providers: list[str] = []
     for name in extraction.providers:
         canonical = allowed_providers.get(name.lower())
-        if canonical and canonical not in providers:
-            providers.append(canonical)
+        if not canonical or canonical in providers:
+            continue
+        if mentioned is not None and canonical not in mentioned:
+            continue
+        providers.append(canonical)
+    if query and not providers:
+        providers = catalog.match_providers(query)
     topics: list[str] = []
     for name in extraction.topics:
         if catalog.allows_topic(name) and name not in topics:

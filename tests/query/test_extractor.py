@@ -37,6 +37,30 @@ def test_heuristic_fallback_only_matches_providers() -> None:
     assert extracted.topics == []
 
 
+def test_openai_extractor_does_not_keep_unmentioned_catalog_provider() -> None:
+    class _Client:
+        def __init__(self) -> None:
+            self.chat = SimpleNamespace(completions=self)
+
+        def create(self, **kwargs):
+            return SimpleNamespace(
+                choices=[
+                    SimpleNamespace(
+                        message=SimpleNamespace(
+                            content='{"kind": "pricing", "providers": ["Nextiva"], "topics": ["pricing"]}'
+                        )
+                    )
+                ]
+            )
+
+    extracted = OpenAIExtractor(client=_Client()).extract(
+        "what is NICE CXone pricing",
+        catalog=_catalog(),
+    )
+    assert extracted.providers == []
+    assert extracted.kind == "pricing"
+
+
 def test_openai_extractor_uses_json_and_constrains_to_catalog() -> None:
     class _Client:
         def __init__(self) -> None:
@@ -86,6 +110,16 @@ def test_constrain_drops_unknown_names() -> None:
     )
     assert constrained.providers == []
     assert constrained.topics == []
+
+
+def test_constrain_does_not_substitute_a_catalog_provider() -> None:
+    constrained = constrain_extraction(
+        QueryExtraction(kind="pricing", providers=["Nextiva"], topics=["pricing"], source="openai"),
+        _catalog(),
+        "what is NICE CXone pricing",
+    )
+    assert constrained.providers == []
+    assert constrained.kind == "pricing"
 
 
 def test_understand_query_uses_injected_extractor() -> None:

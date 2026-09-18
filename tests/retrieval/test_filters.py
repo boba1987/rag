@@ -29,7 +29,7 @@ def test_infers_from_extraction() -> None:
         QueryExtraction(kind="pricing", providers=["RingCentral"], topics=["pricing"], source="openai"),
     )
     assert filters.provider == "RingCentral"
-    assert filters.section == "pricing"
+    assert filters.section is None
     assert filters.content_type == "provider"
 
 
@@ -39,7 +39,7 @@ def test_infers_review_content_type() -> None:
         QueryExtraction(kind="review", providers=["Nextiva"], topics=["support"], source="openai"),
     )
     assert filters.provider == "Nextiva"
-    assert filters.section == "support"
+    assert filters.section is None
     assert filters.content_type == "review"
 
 
@@ -68,6 +68,7 @@ def test_without_extraction_only_matches_catalog_providers(monkeypatch) -> None:
     filters = infer_filters("How much does RingCentral cost?")
     assert filters.provider == "RingCentral"
     assert filters.section is None
+    assert filters.content_type is None
 
 
 def test_does_not_invent_unknown_providers() -> None:
@@ -86,7 +87,18 @@ def test_two_catalog_providers_do_not_force_a_single_filter() -> None:
         ),
     )
     assert filters.provider is None
-    assert filters.section == "pricing"
+    assert filters.section is None
+    assert filters.content_type is None
+
+
+def test_pricing_without_catalog_provider_does_not_restrict_content_type() -> None:
+    filters = infer_filters(
+        "what is NICE CXone pricing?",
+        QueryExtraction(kind="pricing", providers=[], topics=["pricing"], source="openai"),
+    )
+    assert filters.content_type is None
+    assert filters.section is None
+    assert filters.provider is None
 
 
 def test_explicit_filters_override_inferred() -> None:
@@ -99,4 +111,4 @@ def test_explicit_filters_override_inferred() -> None:
     )
     assert merged is not None
     assert merged.provider == "Nextiva"
-    assert merged.section == "pricing"
+    assert merged.content_type == "provider"

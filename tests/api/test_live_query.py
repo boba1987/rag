@@ -23,7 +23,6 @@ def test_live_ringcentral_cost_filter_keeps_ringcentral_sources() -> None:
     unfiltered = answer_query("How much does RingCentral cost?", infer=False)
     assert filtered.retrieval.filters is not None
     assert filtered.retrieval.filters.provider == "RingCentral"
-    assert filtered.retrieval.filters.section
     assert filtered.sources
     assert all("RingCentral" in source.title for source in filtered.sources)
     assert unfiltered.retrieval.filters is None

@@ -2,26 +2,24 @@ from __future__ import annotations
 
 from qdrant_client.http.models import FieldCondition, Filter, MatchValue
 
-from app.models.schemas import RetrievalFilters, RetrievedChunk
+from app.models.schemas import ContentType, RetrievalFilters, RetrievedChunk
 from app.query.catalog import get_catalog
 from app.query.extractor import QueryExtraction
 
-_KIND_CONTENT_TYPE = {
+_KIND_CONTENT_TYPE: dict[str, ContentType] = {
     "review": "review",
-    "pricing": "provider",
 }
 
 
 def infer_filters(query: str, extraction: QueryExtraction | None = None) -> RetrievalFilters:
-    """Filters from LLM extraction when provided; otherwise catalog provider names only."""
+    """Filters from catalog providers and extraction kind. No cue or synonym lists."""
     if extraction is not None:
         providers = extraction.providers
         provider = providers[0] if len(providers) == 1 else None
-        section = extraction.topics[0] if extraction.topics else None
         content_type = _KIND_CONTENT_TYPE.get(extraction.kind)
-        if content_type is None and provider and section:
+        if content_type is None and provider:
             content_type = "provider"
-        return RetrievalFilters(provider=provider, section=section, content_type=content_type)
+        return RetrievalFilters(provider=provider, content_type=content_type)
     providers = get_catalog().match_providers(query)
     provider = providers[0] if len(providers) == 1 else None
     return RetrievalFilters(provider=provider)

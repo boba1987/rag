@@ -58,7 +58,7 @@ def test_post_query_returns_answer_sources_and_inferred_filters() -> None:
     assert body["retrieval"]["preprocess"]["extractor"] == "openai"
     assert "RingCentral" in body["retrieval"]["preprocess"]["rewritten"]
     assert body["retrieval"]["filters"]["provider"] == "RingCentral"
-    assert body["retrieval"]["filters"]["section"] == "Integration"
+    assert body["retrieval"]["filters"]["section"] is None
     assert body["retrieval"]["evidence"]["sufficient"] is True
     assert body["retrieval"]["evidence"]["retried"] is False
     assert retriever.last_filters.provider == "RingCentral"
