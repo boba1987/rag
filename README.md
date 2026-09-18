@@ -41,7 +41,7 @@ Kinds: `factual`, `comparison`, `recommendation`, `pricing`, `review`, `multi-ho
 
 Extract and rewrite use `gpt-4.1-nano` with a heuristic fallback. Providers must appear both in the live Qdrant catalog and in the question. The model must not invent or substitute vendors. Decomposition stays the multi-hop path; rewrite is a single query, not HyDE and not a synonym expander.
 
-The provider catalog is loaded from Qdrant payload (cached in process), not from a static vendor file.
+The provider catalog is loaded from Qdrant payload (cached in process).
 
 ### Evidence and generation
 
@@ -68,15 +68,6 @@ Swagger Authorize uses `X-API-Key`. Example body: `{ "query": "who is better for
 ### Docker
 
 `Dockerfile` builds `python:3.12-slim` and runs uvicorn on port 8000. `docker-compose.yml` has `api` (reads `.env`) and optional local `qdrant` (`:6333`).
-
-### Not implemented / postponed
-
-- AWS production deploy and CloudWatch
-- Live WordPress MySQL reader (`app/ingestion/wordpress.py`)
-- Postgres eval/metadata store
-- MiniLM / BGE cross-encoders at runtime (OpenAI is the working reranker; `sentence-transformers` extra is unused)
-- Recency blend on `updated_at`
-- MCP / thesis multi-agent layer
 
 ---
 
