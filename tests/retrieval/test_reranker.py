@@ -1,8 +1,15 @@
 import pytest
 
-from app.config import BGE_RERANKER_MODEL, CROSS_ENCODER_MODEL
 from app.models.schemas import RetrievedChunk
-from app.retrieval.reranker import BGEReranker, CrossEncoderReranker, LexicalReranker, get_reranker
+from types import SimpleNamespace
+
+from app.retrieval.reranker import (
+    BGEReranker,
+    CrossEncoderReranker,
+    LexicalReranker,
+    OpenAIReranker,
+    get_reranker,
+)
 
 
 def _chunk(chunk_id: str, text: str, score: float = 0.1) -> RetrievedChunk:
@@ -66,13 +73,11 @@ def test_bge_orders_by_pair_score() -> None:
     assert ranked[0].score == 8.0
 
 
-def test_get_reranker_selects_cross_encoder_and_bge() -> None:
-    cross = get_reranker("cross-encoder")
-    bge = get_reranker("bge")
-    assert isinstance(cross, CrossEncoderReranker)
-    assert isinstance(bge, BGEReranker)
-    assert cross._model_name == CROSS_ENCODER_MODEL
-    assert bge._model_name == BGE_RERANKER_MODEL
+def test_get_reranker_uses_openai_even_for_minilm_aliases(monkeypatch) -> None:
+    monkeypatch.setattr("app.retrieval.reranker.OPENAI_API_KEY", "test-key")
+    assert isinstance(get_reranker("openai"), OpenAIReranker)
+    assert isinstance(get_reranker("cross-encoder"), OpenAIReranker)
+    assert isinstance(get_reranker("bge"), OpenAIReranker)
 
 
 def test_get_reranker_rejects_unknown() -> None:
@@ -92,22 +97,47 @@ def test_lexical_reranker_prefers_overlapping_passage() -> None:
     assert [chunk.id for chunk in ranked] == ["salesforce", "pricing"]
 
 
-def test_cross_encoder_falls_back_to_lexical_without_sentence_transformers(monkeypatch) -> None:
-    import builtins
+def test_openai_reranker_orders_by_model_indices() -> None:
+    class _Client:
+        def __init__(self) -> None:
+            self.chat = SimpleNamespace(completions=self)
 
-    real_import = builtins.__import__
+        def create(self, **kwargs):
+            return SimpleNamespace(
+                choices=[
+                    SimpleNamespace(
+                        message=SimpleNamespace(content='{"order": [1, 0]}')
+                    )
+                ]
+            )
 
-    def fake_import(name, *args, **kwargs):
-        if name == "sentence_transformers":
-            raise ImportError("missing")
-        return real_import(name, *args, **kwargs)
-
-    monkeypatch.setattr(builtins, "__import__", fake_import)
     chunks = [
         _chunk("pricing", "RingEX starts at $20.", score=0.9),
         _chunk("salesforce", "RingCentral supports Salesforce.", score=0.2),
     ]
-    ranked = CrossEncoderReranker(top_k=5).rerank(
+    ranked = OpenAIReranker(client=_Client(), top_k=5).rerank(
+        "Does RingCentral integrate with Salesforce?",
+        chunks,
+    )
+    assert [chunk.id for chunk in ranked] == ["salesforce", "pricing"]
+    assert ranked[0].score > ranked[1].score
+
+
+def test_openai_reranker_falls_back_to_lexical_on_bad_json() -> None:
+    class _Client:
+        def __init__(self) -> None:
+            self.chat = SimpleNamespace(completions=self)
+
+        def create(self, **kwargs):
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(content="not-json"))]
+            )
+
+    chunks = [
+        _chunk("pricing", "RingEX starts at $20.", score=0.9),
+        _chunk("salesforce", "RingCentral supports Salesforce.", score=0.2),
+    ]
+    ranked = OpenAIReranker(client=_Client(), top_k=5).rerank(
         "Does RingCentral integrate with Salesforce?",
         chunks,
     )

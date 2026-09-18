@@ -12,6 +12,7 @@ from app.retrieval.parent_child import (
 from app.retrieval.reranker import (
     BGEReranker,
     CrossEncoderReranker,
+    OpenAIReranker,
     RerankRetriever,
     Reranker,
     get_reranker,
@@ -51,6 +52,7 @@ __all__ = [
     "retriever_for",
     "Reranker",
     "CrossEncoderReranker",
+    "OpenAIReranker",
     "BGEReranker",
     "RerankRetriever",
     "get_reranker",
