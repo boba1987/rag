@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from abc import ABC, abstractmethod
 
 from app.config import (
@@ -10,6 +11,8 @@ from app.config import (
     RERANKER_PROVIDER,
 )
 from app.models.schemas import RetrievalFilters, RetrievedChunk
+
+_TOKEN_RE = re.compile(r"[a-z0-9$]+")
 
 
 class Reranker(ABC):
@@ -59,7 +62,10 @@ class CrossEncoderReranker(Reranker):
     def _score_pairs(self, pairs: list[tuple[str, str]]) -> list[float]:
         if self._predict is not None:
             return [float(score) for score in self._predict(pairs)]
-        model = self._load_model()
+        try:
+            model = self._load_model()
+        except ImportError:
+            return [_lexical_score(query, text) for query, text in pairs]
         return [float(score) for score in model.predict(pairs)]
 
     def _load_model(self):
@@ -73,6 +79,37 @@ class CrossEncoderReranker(Reranker):
                 ) from exc
             self._model = CrossEncoder(self._model_name)
         return self._model
+
+
+class LexicalReranker(Reranker):
+    """Token-overlap fallback when sentence-transformers / torch is unavailable."""
+
+    def __init__(self, top_k: int = RERANK_TOP_K) -> None:
+        self._top_k = top_k
+
+    def rerank(
+        self,
+        query: str,
+        chunks: list[RetrievedChunk],
+        top_k: int | None = None,
+    ) -> list[RetrievedChunk]:
+        if not chunks:
+            return []
+        limit = top_k or self._top_k
+        ranked = [
+            chunk.model_copy(update={"score": _lexical_score(query, chunk.text)})
+            for chunk in chunks
+        ]
+        ranked.sort(key=lambda chunk: chunk.score, reverse=True)
+        return ranked[:limit]
+
+
+def _lexical_score(query: str, text: str) -> float:
+    query_tokens = set(_TOKEN_RE.findall(query.lower()))
+    if not query_tokens:
+        return 0.0
+    passage = set(_TOKEN_RE.findall(text.lower()))
+    return len(query_tokens & passage) / len(query_tokens)
 
 
 class BGEReranker(CrossEncoderReranker):
@@ -89,6 +126,8 @@ class BGEReranker(CrossEncoderReranker):
 
 def get_reranker(provider: str | None = None) -> Reranker:
     name = (provider or RERANKER_PROVIDER).lower()
+    if name in {"lexical", "heuristic"}:
+        return LexicalReranker()
     if name in {"cross-encoder", "cross_encoder"}:
         return CrossEncoderReranker()
     if name == "bge":

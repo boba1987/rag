@@ -2,7 +2,7 @@ import pytest
 
 from app.config import BGE_RERANKER_MODEL, CROSS_ENCODER_MODEL
 from app.models.schemas import RetrievedChunk
-from app.retrieval.reranker import BGEReranker, CrossEncoderReranker, get_reranker
+from app.retrieval.reranker import BGEReranker, CrossEncoderReranker, LexicalReranker, get_reranker
 
 
 def _chunk(chunk_id: str, text: str, score: float = 0.1) -> RetrievedChunk:
@@ -78,3 +78,37 @@ def test_get_reranker_selects_cross_encoder_and_bge() -> None:
 def test_get_reranker_rejects_unknown() -> None:
     with pytest.raises(ValueError, match="Unknown reranker"):
         get_reranker("colbert")
+
+
+def test_lexical_reranker_prefers_overlapping_passage() -> None:
+    chunks = [
+        _chunk("pricing", "RingEX starts at $20.", score=0.9),
+        _chunk("salesforce", "RingCentral supports Salesforce.", score=0.2),
+    ]
+    ranked = LexicalReranker(top_k=5).rerank(
+        "Does RingCentral integrate with Salesforce?",
+        chunks,
+    )
+    assert [chunk.id for chunk in ranked] == ["salesforce", "pricing"]
+
+
+def test_cross_encoder_falls_back_to_lexical_without_sentence_transformers(monkeypatch) -> None:
+    import builtins
+
+    real_import = builtins.__import__
+
+    def fake_import(name, *args, **kwargs):
+        if name == "sentence_transformers":
+            raise ImportError("missing")
+        return real_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+    chunks = [
+        _chunk("pricing", "RingEX starts at $20.", score=0.9),
+        _chunk("salesforce", "RingCentral supports Salesforce.", score=0.2),
+    ]
+    ranked = CrossEncoderReranker(top_k=5).rerank(
+        "Does RingCentral integrate with Salesforce?",
+        chunks,
+    )
+    assert [chunk.id for chunk in ranked] == ["salesforce", "pricing"]
