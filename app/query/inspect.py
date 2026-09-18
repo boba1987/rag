@@ -22,12 +22,6 @@ EVIDENCE_QUESTIONS = (
     *DEFAULT_QUESTIONS,
     "What is Zoom Phone's 2020 revenue?",
 )
-RAPTOR_QUESTIONS = (
-    "What are the main strengths and weaknesses of RingCentral?",
-    "How much does RingCentral cost?",
-    "Compare RingCentral and Nextiva pricing and Salesforce integrations.",
-    "What do customers say about Nextiva support?",
-)
 
 
 def inspect_preprocess(questions: list[str] | None = None, extractor=None, catalog=None) -> list[dict]:
@@ -91,63 +85,6 @@ def write_evidence_inspect(
     target.write_text(
         json.dumps(
             inspect_evidence(
-                questions,
-                retriever=retriever,
-                generator=generator,
-                extractor=extractor,
-                catalog=catalog,
-            ),
-            indent=2,
-        )
-        + "\n"
-    )
-    return target
-
-
-def inspect_raptor(
-    questions: list[str] | None = None,
-    retriever=None,
-    generator=None,
-    extractor=None,
-    catalog=None,
-) -> list[dict]:
-    rows: list[dict] = []
-    for question in questions or list(RAPTOR_QUESTIONS):
-        result = answer_query(
-            question,
-            retriever=retriever,
-            generator=generator,
-            extractor=extractor,
-            catalog=catalog,
-            infer=False,
-            strategy="raptor",
-        )
-        evidence = result.retrieval.evidence
-        rows.append(
-            {
-                "query": question,
-                "answer": result.answer,
-                "strategy": result.retrieval.strategy,
-                "sources": [source.model_dump() for source in result.sources],
-                "evidence": evidence.model_dump() if evidence else None,
-            }
-        )
-    return rows
-
-
-def write_raptor_inspect(
-    path: Path | None = None,
-    questions: list[str] | None = None,
-    retriever=None,
-    generator=None,
-    extractor=None,
-    catalog=None,
-) -> Path:
-    target = path or QUERY_DIR / "raptor-inspect.json"
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(
-        json.dumps(
-            inspect_raptor(
                 questions,
                 retriever=retriever,
                 generator=generator,

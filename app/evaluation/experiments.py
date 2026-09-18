@@ -75,7 +75,7 @@ def estimate_cost_usd(embed_tokens: int, prompt_tokens: int, completion_tokens: 
     ) / 1_000_000
 
 
-COMPARE_STRATEGIES = ("dense", "sparse", "hybrid", "rerank", "raptor")
+COMPARE_STRATEGIES = ("dense", "sparse", "hybrid", "rerank")
 
 
 def run_eval_case(
@@ -309,7 +309,6 @@ def strategy_retrievers() -> dict:
 
 
 def chunker_retrievers() -> dict:
-    from app.raptor.retrieval import RaptorRetriever
     from app.retrieval.dense import DenseRetriever
     from app.retrieval.parent_child import ParentExpandingRetriever
 
@@ -319,9 +318,6 @@ def chunker_retrievers() -> dict:
         dense = DenseRetriever(collection=qdrant_collection(name))
         retrievers[name] = ParentExpandingRetriever(dense) if name == "parent_child" else dense
         logger.info("Loaded chunker retriever %s", name)
-    logger.info("Loading retriever raptor")
-    retrievers["raptor"] = RaptorRetriever()
-    logger.info("Loaded retriever raptor")
     return retrievers
 
 

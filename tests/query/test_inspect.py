@@ -3,10 +3,8 @@ from app.query.evidence import ABSTAIN_MESSAGE
 from app.query.inspect import (
     inspect_evidence,
     inspect_preprocess,
-    inspect_raptor,
     write_evidence_inspect,
     write_preprocess_inspect,
-    write_raptor_inspect,
 )
 from tests.query.fakes import DEFAULT_SCRIPTED
 
@@ -65,37 +63,3 @@ def test_inspect_evidence_marks_abstain(tmp_path) -> None:
     )
     assert path.is_file()
 
-
-def test_inspect_raptor_echoes_strategy(tmp_path) -> None:
-    class _SummaryRetriever:
-        def search(self, query: str, top_k=None, filters=None, infer: bool = False):
-            return [
-                RetrievedChunk(
-                    id="raptor_100_l1_00",
-                    document_id="100",
-                    content_type="review",
-                    provider="RingCentral",
-                    title="RingCentral Review",
-                    section="Summary",
-                    heading_path=["RingCentral Review", "Summary"],
-                    text="RingCentral strengths include pricing; weaknesses include a learning curve.",
-                    score=0.9,
-                )
-            ]
-
-    rows = inspect_raptor(
-        questions=["What are the main strengths and weaknesses of RingCentral?"],
-        retriever=_SummaryRetriever(),
-        generator=_FixedGenerator(),
-        extractor=DEFAULT_SCRIPTED,
-    )
-    assert rows[0]["strategy"] == "raptor"
-    assert rows[0]["sources"][0]["section"] == "Summary"
-    path = write_raptor_inspect(
-        path=tmp_path / "raptor-inspect.json",
-        questions=["What are the main strengths and weaknesses of RingCentral?"],
-        retriever=_SummaryRetriever(),
-        generator=_FixedGenerator(),
-        extractor=DEFAULT_SCRIPTED,
-    )
-    assert path.is_file()

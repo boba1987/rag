@@ -29,10 +29,6 @@ def retriever_for(strategy: RetrievalStrategy = "dense"):
         retriever = HybridRetriever()
     elif strategy == "rerank":
         retriever = RerankRetriever()
-    elif strategy == "raptor":
-        from app.raptor.retrieval import RaptorRetriever
-
-        return RaptorRetriever()
     else:
         raise ValueError(f"Unknown retrieval strategy: {strategy}")
     if ACTIVE_CHUNKER == "parent_child":

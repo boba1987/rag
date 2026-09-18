@@ -41,12 +41,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--compare",
         action="store_true",
-        help="Compare dense, sparse, hybrid, rerank, and RAPTOR",
+        help="Compare dense, sparse, hybrid, and rerank",
     )
     parser.add_argument(
         "--compare-chunkers",
         action="store_true",
-        help="Compare dense retrieval on each chunker collection plus RAPTOR",
+        help="Compare dense retrieval on each chunker collection",
     )
     parser.add_argument(
         "--retrieval-only",

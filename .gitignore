@@ -72,6 +72,3 @@ embeddings/
 *.gguf
 *.pkl
 *.pickle
-articles.json
-providers.json
-reviews.json

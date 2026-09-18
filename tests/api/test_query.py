@@ -107,7 +107,7 @@ def test_post_query_echoes_sparse_hybrid_and_rerank_strategy() -> None:
     client = AuthedClient(
         create_app(retriever=_FakeRetriever(), generator=_FakeGenerator(), extractor=DEFAULT_SCRIPTED)
     )
-    for strategy in ("sparse", "hybrid", "rerank", "raptor"):
+    for strategy in ("sparse", "hybrid", "rerank"):
         response = client.post(
             "/query",
             json={
@@ -123,11 +123,12 @@ def test_post_query_rejects_unknown_strategy() -> None:
     client = AuthedClient(
         create_app(retriever=_FakeRetriever(), generator=_FakeGenerator(), extractor=DEFAULT_SCRIPTED)
     )
-    response = client.post(
-        "/query",
-        json={"query": "Does RingCentral integrate with Salesforce?", "strategy": "colbert"},
-    )
-    assert response.status_code == 422
+    for strategy in ("colbert", "raptor"):
+        response = client.post(
+            "/query",
+            json={"query": "Does RingCentral integrate with Salesforce?", "strategy": strategy},
+        )
+        assert response.status_code == 422
 
 
 def test_answer_query_runs_the_langgraph_workflow(monkeypatch) -> None:

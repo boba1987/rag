@@ -54,7 +54,7 @@ def _cases() -> list[EvalCase]:
 
 
 def test_compare_strategies_are_the_live_retrieval_paths() -> None:
-    assert COMPARE_STRATEGIES == ("dense", "sparse", "hybrid", "rerank", "raptor")
+    assert COMPARE_STRATEGIES == ("dense", "sparse", "hybrid", "rerank")
 
 
 def test_run_experiment_retrieval_only_skips_generator() -> None:
@@ -76,14 +76,14 @@ def test_run_comparison_ranks_variants(tmp_path) -> None:
         _cases(),
         retrievers={
             "dense": _DocRetriever("8019"),
-            "raptor": _DocRetriever("9999"),
+            "sparse": _DocRetriever("9999"),
         },
         generator=_SilentGenerator(),
         generate=False,
     )
     assert report.embedder
     assert report.generate is False
-    assert report.variants["dense"].retrieval["recall_at_k"] > report.variants["raptor"].retrieval["recall_at_k"]
+    assert report.variants["dense"].retrieval["recall_at_k"] > report.variants["sparse"].retrieval["recall_at_k"]
     by_category = category_retrieval(report.variants["dense"].cases, report.cases, k=5)
     assert by_category["pricing"]["recall_at_k"] == 1.0
     assert by_category["comparison"]["recall_at_k"] == 0.5
@@ -91,7 +91,7 @@ def test_run_comparison_ranks_variants(tmp_path) -> None:
     path = write_comparison_report(report, path=tmp_path / "eval-compare.json")
     payload = json.loads(path.read_text(encoding="utf-8"))
     assert "no Bedrock access" in payload["note"]
-    assert set(payload["variants"]) == {"dense", "raptor"}
+    assert set(payload["variants"]) == {"dense", "sparse"}
     assert payload["variants"]["dense"]["by_category"]["pricing"]["recall_at_k"] == 1.0
 
 
