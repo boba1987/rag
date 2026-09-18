@@ -20,7 +20,13 @@ from app.query.evidence import (
     check_evidence,
     get_evidence_checker,
 )
-from app.query.rewriter import rewrite_query
+from app.query.rewriter import (
+    HeuristicRewriter,
+    OpenAIRewriter,
+    QueryRewriter,
+    get_rewriter,
+    rewrite_query,
+)
 
 __all__ = [
     "HeuristicExtractor",
@@ -29,6 +35,9 @@ __all__ = [
     "QueryExtraction",
     "QueryExtractor",
     "QueryKind",
+    "QueryRewriter",
+    "HeuristicRewriter",
+    "OpenAIRewriter",
     "EvidenceChecker",
     "EvidenceVerdict",
     "ABSTAIN_MESSAGE",
@@ -43,6 +52,7 @@ __all__ = [
     "expand_queries",
     "get_catalog",
     "get_extractor",
+    "get_rewriter",
     "load_catalog",
     "mentioned_providers",
     "reset_catalog",
