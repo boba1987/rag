@@ -1,352 +1,224 @@
 [
   {
     "id": "eval_001",
-    "question": "Does RingCentral integrate with Salesforce?",
-    "expected_documents": ["8015"],
-    "expected_answer": "Yes. RingCentral has a Salesforce integration for automation and analytics.",
-    "category": "factual"
+    "question": "What is NICE CXone pricing in the Best AI Call Center Software article?",
+    "expected_documents": [
+      "106730"
+    ],
+    "expected_answer": "NICE CXone pricing ranges from $110 to $249 per agent/month, and the Ultimate plan also charges $0.25 per session.",
+    "category": "pricing"
   },
   {
     "id": "eval_002",
-    "question": "How much does Nextiva Core cost per user?",
-    "expected_documents": ["8019"],
-    "expected_answer": "Nextiva Core is $15–$23 per user per month.",
+    "question": "What is the monthly per-user price range of NICE CXone plans on the provider page?",
+    "expected_documents": [
+      "8541"
+    ],
+    "expected_answer": "NICE CXone pricing plans range from $71 to $209 monthly per user, from Digital Agent at $71 to Complete Suite at $209.",
     "category": "pricing"
   },
   {
     "id": "eval_003",
-    "question": "Does Nextiva Core include SMS text messaging?",
-    "expected_documents": ["8019"],
-    "expected_answer": "Yes. Nextiva Core includes 100 SMS text messages per user per month.",
-    "category": "features"
-  },
-  {
-    "id": "eval_004",
-    "question": "Does Nextiva Core include Google Workspace and Microsoft 365 integrations?",
-    "expected_documents": ["8019"],
-    "expected_answer": "Yes. Nextiva Core includes integrations with Google Workspace and Microsoft 365.",
-    "category": "integrations"
-  },
-  {
-    "id": "eval_005",
-    "question": "Who is Five9 better for compared with Dialpad?",
-    "expected_documents": ["106805"],
-    "expected_answer": "Five9 is better for large-scale, outbound-heavy, or regulated contact centers that need workforce management and advanced dialers. Dialpad is better for teams that want an all-in-one communications tool with real-time AI.",
-    "category": "comparison"
-  },
-  {
-    "id": "eval_006",
-    "question": "Who should use Nextiva Core or Engage?",
-    "expected_documents": ["8019"],
-    "expected_answer": "Nextiva Core and Engage are best for businesses that want a single platform for phone, SMS, chat, and video, especially growing companies that want live customer communication rather than bots.",
+    "question": "Who is NiCE CXone best for according to the Best AI Call Center Software article?",
+    "expected_documents": [
+      "106730"
+    ],
+    "expected_answer": "NiCE CXone is best for large enterprises needing a full contact center suite at scale, especially large or compliance-heavy centers that need serious QA and reporting.",
     "category": "recommendation"
   },
   {
+    "id": "eval_004",
+    "question": "How much are Dialpad Standard and Pro on annual billing?",
+    "expected_documents": [
+      "13592"
+    ],
+    "expected_answer": "On annual pricing, Dialpad Standard is $15 per user per month and Pro is $25 per user per month.",
+    "category": "pricing"
+  },
+  {
+    "id": "eval_005",
+    "question": "What is Zoom Phone's lowest per-user monthly price?",
+    "expected_documents": [
+      "8487"
+    ],
+    "expected_answer": "Zoom Phone starts at $10 per month per user.",
+    "category": "pricing"
+  },
+  {
+    "id": "eval_006",
+    "question": "How much is Aircall's most basic plan per user?",
+    "expected_documents": [
+      "47925"
+    ],
+    "expected_answer": "Aircall's most basic plan is $30 per month per user, with a three-user minimum.",
+    "category": "pricing"
+  },
+  {
     "id": "eval_007",
-    "question": "How does Nextiva Core pricing compare with RingCentral's lowest RingEX plan?",
-    "expected_documents": ["8019", "8015"],
-    "expected_answer": "Nextiva Core is $15–$23 per user per month. RingCentral's lowest RingEX tier is $20 per user per month on annual billing ($30 monthly).",
-    "category": "multi-hop"
+    "question": "What are the Vonage Business per-user monthly plan prices?",
+    "expected_documents": [
+      "8016"
+    ],
+    "expected_answer": "Vonage Business lists plans at $19.99, $29.99, and $39.99 per user per month.",
+    "category": "pricing"
   },
   {
     "id": "eval_008",
-    "question": "How much does it cost?",
-    "expected_documents": [],
-    "expected_answer": "The question is ambiguous. Ask which provider or plan, such as Nextiva Core or RingCentral RingEX.",
-    "category": "ambiguous"
+    "question": "What is Direct Inward Dialing (DID)?",
+    "expected_documents": [
+      "4127"
+    ],
+    "expected_answer": "DID lets callers bypass phone menus to dial a specific number that routes them directly to an individual, department, or extension.",
+    "category": "factual"
   },
   {
     "id": "eval_009",
-    "question": "What is Zoom Phone's 2020 annual revenue?",
-    "expected_documents": [],
-    "expected_answer": "The indexed GetVoIP corpus does not contain Zoom Phone's 2020 annual revenue.",
-    "category": "unanswerable"
+    "question": "What does Cloud UC refer to?",
+    "expected_documents": [
+      "4226"
+    ],
+    "expected_answer": "Cloud UC (Unified Communications) refers to using the Internet for the storage and transmission of voice, data, and video.",
+    "category": "factual"
   },
   {
     "id": "eval_010",
-    "question": "What is an AI receptionist?",
-    "expected_documents": ["106207"],
-    "expected_answer": "An AI receptionist is a conversational, voice-based virtual assistant that answers business phone calls using natural language processing.",
+    "question": "What is Automatic Call Distribution (ACD)?",
+    "expected_documents": [
+      "4095"
+    ],
+    "expected_answer": "ACD is a call center feature that automatically receives inbound calls and routes them to a destination such as an agent, department, or ring group.",
     "category": "factual"
   },
   {
     "id": "eval_011",
-    "question": "Does Nextiva include social media and reputation management on all plans?",
-    "expected_documents": ["8019"],
-    "expected_answer": "Yes. The Nextiva review says it is the only CX and CCaaS product to include social media and reputation management features on all plans.",
-    "category": "factual"
+    "question": "What is simultaneous ring?",
+    "expected_documents": [
+      "4188"
+    ],
+    "expected_answer": "Simultaneous ring is a VoIP feature that automatically forwards inbound calls to multiple agent extensions, ring groups, and phone lines at the same time.",
+    "category": "features"
   },
   {
     "id": "eval_012",
-    "question": "What uptime does Nextiva claim?",
-    "expected_documents": ["8019"],
-    "expected_answer": "Nextiva claims 99.999% proven uptime powered by 8 global points of presence.",
+    "question": "How much did Goldman Sachs invest in Nextiva when it became a UCaaS unicorn?",
+    "expected_documents": [
+      "69468"
+    ],
+    "expected_answer": "Goldman Sachs invested $200 million. The article says Nextiva was valued at nearly three billion dollars.",
     "category": "factual"
   },
   {
     "id": "eval_013",
-    "question": "Which auto dialer types does RingCentral offer?",
-    "expected_documents": ["8015"],
-    "expected_answer": "RingCentral offers progressive, predictive, preview, and TCPA Safe dialers.",
+    "question": "How much did Ericsson pay to acquire Vonage?",
+    "expected_documents": [
+      "71923"
+    ],
+    "expected_answer": "Ericsson acquired Vonage for $6.2 billion.",
     "category": "factual"
   },
   {
     "id": "eval_014",
-    "question": "Is there a Nextiva mobile app for iOS and Android?",
-    "expected_documents": ["8019"],
-    "expected_answer": "Yes. The Nextiva Mobile App for iOS and Android provides VoIP calling, live chat, video, and text messaging.",
+    "question": "How many paid seats did RingCentral MVP reach in the Q2 2022 earnings news?",
+    "expected_documents": [
+      "82108"
+    ],
+    "expected_answer": "RingCentral MVP reached five million paid seats. Total revenue for the quarter was $487 million.",
     "category": "factual"
   },
   {
     "id": "eval_015",
-    "question": "How high is medical reception turnover according to the HIPAA AI receptionist article?",
-    "expected_documents": ["106056"],
-    "expected_answer": "Reception turnover runs north of 40% in most regions.",
-    "category": "factual"
+    "question": "What is the starting price of Genesys Cloud CX 4?",
+    "expected_documents": [
+      "102673"
+    ],
+    "expected_answer": "Genesys Cloud CX 4 starts at $240 per user per month.",
+    "category": "pricing"
   },
   {
     "id": "eval_016",
-    "question": "What is Interactive Voice Response (IVR)?",
-    "expected_documents": ["106558"],
-    "expected_answer": "IVR is an automated phone system that routes callers through pre-recorded menus using keypad presses or simple voice input.",
-    "category": "factual"
+    "question": "How does Genesys Cloud CX 3 pricing compare with CX 4?",
+    "expected_documents": [
+      "102673"
+    ],
+    "expected_answer": "Genesys Cloud CX 3 runs at $155 per user per month. CX 4 starts at $240 per user per month and adds AI-first tools such as Agent Copilot on top of the CX 3 lineup.",
+    "category": "comparison"
   },
   {
     "id": "eval_017",
-    "question": "What is the price range for Nextiva Business Phone Service plans?",
-    "expected_documents": ["8019"],
-    "expected_answer": "Nextiva offers 3 plans from $15–$75 per user per month with annual billing, and from $23 per user per month with monthly billing.",
-    "category": "pricing"
+    "question": "What did an 8x8 reviewer say about reaching support?",
+    "expected_documents": [
+      "101968"
+    ],
+    "expected_answer": "The reviewer said professional staff were quick to respond, they never had to wait in queue, and the agents were well trained.",
+    "category": "recommendation"
   },
   {
     "id": "eval_018",
-    "question": "How much does Nextiva Engage cost per user?",
-    "expected_documents": ["8019"],
-    "expected_answer": "Nextiva Engage is $25–$50 per user per month.",
-    "category": "pricing"
+    "question": "What complaint did a Dialpad reviewer make about contacts?",
+    "expected_documents": [
+      "102389"
+    ],
+    "expected_answer": "The reviewer said Dialpad contacts do not store first and last name fields, only a text string, so caller labels become fragments of sentences.",
+    "category": "factual"
   },
   {
     "id": "eval_019",
-    "question": "How much does Nextiva Scale cost per user?",
-    "expected_documents": ["8019"],
-    "expected_answer": "Nextiva Scale is $75 per user per month.",
-    "category": "pricing"
+    "question": "Why did a Zoom reviewer recommend Zoom One Business Plus?",
+    "expected_documents": [
+      "94006"
+    ],
+    "expected_answer": "The reviewer called it feature-rich and easy to manage, and said Zoom Webinar polling and voting were a key differentiator. They renewed for another 3 years.",
+    "category": "recommendation"
   },
   {
     "id": "eval_020",
-    "question": "What is the starting price of Nextiva contact center plans?",
-    "expected_documents": ["8019"],
-    "expected_answer": "Nextiva offers three bundled contact center plans starting at $75 per agent per month.",
-    "category": "pricing"
+    "question": "What SMS problem did an Aircall reviewer report?",
+    "expected_documents": [
+      "105603"
+    ],
+    "expected_answer": "The reviewer said Aircall could not deliver promised texting after four months of support back-and-forth, with the team blaming an upstream provider.",
+    "category": "factual"
   },
   {
     "id": "eval_021",
-    "question": "How much is RingCentral's lowest RingEX plan?",
-    "expected_documents": ["8015"],
-    "expected_answer": "The lowest RingEX tier is $20 per user per month on annual billing, or $30 per user per month billed monthly.",
+    "question": "What are Five9's published Digital and Core seat prices in the Best AI Call Center article?",
+    "expected_documents": [
+      "106730"
+    ],
+    "expected_answer": "Five9 Digital is $119 per seat/month for digital channels only. Core is $159 per seat/month for voice and digital channels with essential AI tools.",
     "category": "pricing"
   },
   {
     "id": "eval_022",
-    "question": "How does AI receptionist monthly cost compare with a human receptionist?",
-    "expected_documents": ["106009"],
-    "expected_answer": "AI receptionists cost roughly $300 per month versus about $3,500 to $5,000 per month for a human receptionist.",
-    "category": "pricing"
+    "question": "How does NICE CXone pricing in the AI call center article compare with the NICE CXone provider page?",
+    "expected_documents": [
+      "106730",
+      "8541"
+    ],
+    "expected_answer": "The article lists $110–$249 per agent/month plus $0.25 per session on Ultimate. The provider page lists plans from $71 to $209 monthly per user.",
+    "category": "multi-hop"
   },
   {
     "id": "eval_023",
-    "question": "Does Nextiva Scale include unlimited SMS?",
-    "expected_documents": ["8019"],
-    "expected_answer": "Yes. Nextiva Scale adds unlimited SMS text messaging.",
-    "category": "features"
-  },
-  {
-    "id": "eval_024",
-    "question": "Does Nextiva Core include AI voicemail transcription?",
-    "expected_documents": ["8019"],
-    "expected_answer": "Yes. Nextiva Core includes inbound/outbound VoIP calling with smart call routing and AI voicemail transcription.",
-    "category": "features"
-  },
-  {
-    "id": "eval_025",
-    "question": "How many participants can a RingCentral video meeting include?",
-    "expected_documents": ["8015"],
-    "expected_answer": "RingCentral video meetings can include up to 200 participants and have no time limitations.",
-    "category": "features"
-  },
-  {
-    "id": "eval_026",
-    "question": "How many attendees can a RingCentral Webinar invite?",
-    "expected_documents": ["8015"],
-    "expected_answer": "Companies can invite up to 10,000 attendees and up to 100 panelists.",
-    "category": "features"
-  },
-  {
-    "id": "eval_027",
-    "question": "Do all Nextiva Business Phone Service plans include 24/7 support?",
-    "expected_documents": ["8019"],
-    "expected_answer": "Yes. All plans include 24/7 customer support via phone, website chat, and email.",
-    "category": "features"
-  },
-  {
-    "id": "eval_028",
-    "question": "What three technologies does an AI receptionist combine to handle inbound calls?",
-    "expected_documents": ["105931"],
-    "expected_answer": "Speech-to-text (STT), a large language model (LLM), and text-to-speech (TTS).",
-    "category": "features"
-  },
-  {
-    "id": "eval_029",
-    "question": "Are Nextiva CRM integrations included or sold as add-ons on Business Phone Service?",
-    "expected_documents": ["8019"],
-    "expected_answer": "CRM system integrations and API access are available to Business Phone Service users as paid add-ons.",
-    "category": "integrations"
-  },
-  {
-    "id": "eval_030",
-    "question": "Which Nextiva plans include Microsoft Teams integration?",
-    "expected_documents": ["8019"],
-    "expected_answer": "Engage and Scale plans include Microsoft Teams integration.",
-    "category": "integrations"
-  },
-  {
-    "id": "eval_031",
-    "question": "How many integration options does RingCentral advertise?",
-    "expected_documents": ["8015"],
-    "expected_answer": "RingCentral advertises over 200 integration options.",
-    "category": "integrations"
-  },
-  {
-    "id": "eval_032",
-    "question": "Does RingCentral integrate with Zendesk?",
-    "expected_documents": ["8015"],
-    "expected_answer": "Yes. Zendesk is listed among RingCentral customer support integrations, along with HubSpot and HappyFox.",
-    "category": "integrations"
-  },
-  {
-    "id": "eval_033",
-    "question": "Which platform wins on total cost of ownership for small and mid-sized teams in Five9 vs Dialpad?",
-    "expected_documents": ["106805"],
-    "expected_answer": "Dialpad wins on total cost of ownership for small and mid-sized teams.",
-    "category": "comparison"
-  },
-  {
-    "id": "eval_034",
-    "question": "What is Five9's starting price per concurrent user?",
-    "expected_documents": ["106805"],
-    "expected_answer": "Five9 starts from $119 per concurrent user per month across 5 suite tiers, with an annual commitment.",
+    "question": "What is Talkdesk Voice Essentials pricing in the Best AI Call Center Software article?",
+    "expected_documents": [
+      "106730"
+    ],
+    "expected_answer": "Talkdesk's call center offering starts with Voice Essentials at $105 per user/month. Overall published plans range from $85 to $225 per user/month.",
     "category": "pricing"
   },
   {
-    "id": "eval_035",
-    "question": "What is Dialpad's contact center price range per user?",
-    "expected_documents": ["106805"],
-    "expected_answer": "Dialpad contact center plans run from $80 to $150 per user per month.",
-    "category": "comparison"
-  },
-  {
-    "id": "eval_036",
-    "question": "On what kinds of calls do AI receptionists outperform humans?",
-    "expected_documents": ["106009"],
-    "expected_answer": "AI receptionists shine on routine inbound calls such as hours, directions, appointment booking, payment status, and basic FAQs, answering on the first ring including after hours.",
-    "category": "comparison"
-  },
-  {
-    "id": "eval_037",
-    "question": "When does IVR still make sense versus an AI receptionist?",
-    "expected_documents": ["106558"],
-    "expected_answer": "IVR is a precise tool for getting high call volume to the correct department cheaply and predictably; a menu can still beat a conversation in those cases.",
-    "category": "comparison"
-  },
-  {
-    "id": "eval_038",
-    "question": "Who is the HIPAA AI receptionist article's best overall pick?",
-    "expected_documents": ["106056"],
-    "expected_answer": "Best overall is DeepCura, for clinical workflow depth and mid-call SMS fallback.",
-    "category": "recommendation"
-  },
-  {
-    "id": "eval_039",
-    "question": "Who is Nextiva Scale best for?",
-    "expected_documents": ["8019"],
-    "expected_answer": "Nextiva Scale is best for businesses that need agent coaching, true omnichannel history, and AI-powered workflow tools such as chatbots, intelligent routing, and automated callbacks.",
-    "category": "recommendation"
-  },
-  {
-    "id": "eval_040",
-    "question": "Is RingCentral a good fit for buyers who want a simple, hand-held setup?",
-    "expected_documents": ["8015"],
-    "expected_answer": "Not primarily. RingCentral offers deep control and customization, but it is not known for holding customers' hands through setup, so complexity is a trade-off.",
-    "category": "recommendation"
-  },
-  {
-    "id": "eval_041",
-    "question": "What do Nextiva reviewers say about customer support?",
-    "expected_documents": ["106910", "106948"],
-    "expected_answer": "Reviewers say Nextiva customer support has been helpful when they needed assistance.",
-    "category": "recommendation"
-  },
-  {
-    "id": "eval_042",
-    "question": "Did any RingCentral reviewer report a very negative support experience?",
-    "expected_documents": ["106747"],
-    "expected_answer": "Yes. One reviewer said they cancelled, described offshore support as unable to answer questions, and called the service the worst they had experienced.",
-    "category": "factual"
-  },
-  {
-    "id": "eval_043",
-    "question": "Does Nextiva Core include Microsoft Teams, and does RingCentral integrate with Teams?",
-    "expected_documents": ["8019", "8015"],
-    "expected_answer": "Microsoft Teams is included on Nextiva Engage and Scale, not listed as included on Core. RingCentral lists Teams among productivity and calendaring integrations.",
-    "category": "multi-hop"
-  },
-  {
-    "id": "eval_044",
-    "question": "How do Nextiva Core SMS limits compare with Nextiva Scale SMS?",
-    "expected_documents": ["8019"],
-    "expected_answer": "Core includes 100 SMS messages per user per month. Scale includes unlimited SMS.",
-    "category": "multi-hop"
-  },
-  {
-    "id": "eval_045",
-    "question": "How does a typical AI receptionist monthly cost compare with Nextiva Core pricing?",
-    "expected_documents": ["106009", "8019"],
-    "expected_answer": "An AI receptionist is cited at about $300 per month, while Nextiva Core is $15–$23 per user per month. They are different products; the article figure is for an AI receptionist, not Nextiva Core.",
-    "category": "multi-hop"
-  },
-  {
-    "id": "eval_046",
-    "question": "Which plan is best?",
+    "id": "eval_024",
+    "question": "Which CCaaS is cheapest?",
     "expected_documents": [],
-    "expected_answer": "The question is ambiguous. Ask which provider and what the business needs, such as Nextiva Core vs Scale or Five9 vs Dialpad.",
+    "expected_answer": "The question is ambiguous. Ask which vendors and whether you mean published per-seat rates, such as Aircall $30, Dialpad contact center $80, or Genesys CX 4 $240.",
     "category": "ambiguous"
   },
   {
-    "id": "eval_047",
-    "question": "Does it integrate with Salesforce?",
+    "id": "eval_025",
+    "question": "What was Slack's 2018 IPO opening share price?",
     "expected_documents": [],
-    "expected_answer": "The question is ambiguous. RingCentral has a Salesforce integration; Nextiva lists CRM integrations as paid add-ons. Ask which provider.",
-    "category": "ambiguous"
-  },
-  {
-    "id": "eval_048",
-    "question": "Is support any good?",
-    "expected_documents": [],
-    "expected_answer": "The question is ambiguous. Nextiva reviews often call support helpful; RingCentral reviews are mixed, including both praise and a strongly negative cancellation review.",
-    "category": "ambiguous"
-  },
-  {
-    "id": "eval_049",
-    "question": "What is 8x8's current market share in North America?",
-    "expected_documents": [],
-    "expected_answer": "The indexed GetVoIP corpus does not contain 8x8 North America market share.",
-    "category": "unanswerable"
-  },
-  {
-    "id": "eval_050",
-    "question": "What was Vonage's Q3 2019 earnings per share?",
-    "expected_documents": [],
-    "expected_answer": "The indexed GetVoIP corpus does not contain Vonage Q3 2019 earnings.",
+    "expected_answer": "The indexed GetVoIP corpus does not contain Slack's 2018 IPO opening price.",
     "category": "unanswerable"
   }
 ]
