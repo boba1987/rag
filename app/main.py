@@ -10,6 +10,7 @@ def create_app(retriever=None, generator=None, extractor=None) -> FastAPI:
         title="GetVoIP RAG",
         version="0.1.0",
         swagger_ui_parameters={"persistAuthorization": True},
+        openapi_tags=[{"name": "API"}],
     )
     application.add_middleware(ApiKeyMiddleware)
     application.state.retriever = retriever

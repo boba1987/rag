@@ -5,7 +5,7 @@ from app.generation.generator import get_generator
 from app.models.schemas import QueryRequest, QueryResponse, RetrievalFilters, RetrievalStrategy
 from app.workflows.rag_graph import run_rag_graph
 
-router = APIRouter(dependencies=[Security(API_KEY_HEADER)])
+router = APIRouter(tags=["API"], dependencies=[Security(API_KEY_HEADER)])
 
 
 def answer_query(

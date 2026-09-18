@@ -95,6 +95,10 @@ class RetrievalFilters(BaseModel):
     document_id: str | None = None
 
 
+class HealthResponse(BaseModel):
+    status: str = "ok"
+
+
 class QueryRequest(BaseModel):
     model_config = ConfigDict(
         json_schema_extra={

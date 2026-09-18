@@ -62,10 +62,17 @@ def test_docs_and_openapi_are_public() -> None:
         "name": "X-API-Key",
         "description": "Value of API_KEY from the server environment.",
     }
+    assert payload["tags"] == [{"name": "API"}]
+    assert payload["paths"]["/query"]["post"]["tags"] == ["API"]
+    assert payload["paths"]["/health"]["get"]["tags"] == ["API"]
     assert {"APIKeyHeader": []} in payload["paths"]["/query"]["post"].get("security", [])
     assert raw.get("/redoc").status_code == 200
     assert raw.get("/health").status_code == 200
     assert raw.get("/health").json() == {"status": "ok"}
+    health_schema = payload["components"]["schemas"]["HealthResponse"]
+    assert health_schema["properties"] == {"status": {"type": "string", "title": "Status", "default": "ok"}}
+    assert "additionalProperties" not in health_schema
+    assert payload["paths"]["/health"]["get"].get("security") in (None, [])
     assert raw.post("/query", json={"query": "Does RingCentral integrate with Salesforce?"}).status_code == 401
 
 
