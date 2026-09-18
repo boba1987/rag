@@ -5,7 +5,11 @@ from app.api.query import router
 
 
 def create_app(retriever=None, generator=None, extractor=None) -> FastAPI:
-    application = FastAPI(title="GetVoIP RAG", version="0.1.0")
+    application = FastAPI(
+        title="GetVoIP RAG",
+        version="0.1.0",
+        swagger_ui_parameters={"persistAuthorization": True},
+    )
     application.add_middleware(ApiKeyMiddleware)
     application.state.retriever = retriever
     application.state.generator = generator

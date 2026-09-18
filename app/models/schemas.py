@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 ContentType = Literal["article", "review", "provider"]
 RetrievalStrategy = Literal["dense", "sparse", "hybrid", "rerank", "raptor"]
@@ -96,6 +96,15 @@ class RetrievalFilters(BaseModel):
 
 
 class QueryRequest(BaseModel):
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "query": "who is better for startups Nextiva or Dialpad?",
+                "strategy": "rerank",
+            }
+        }
+    )
+
     query: str = Field(min_length=1)
     filters: RetrievalFilters | None = None
     infer: bool = True

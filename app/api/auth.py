@@ -6,11 +6,17 @@ from hmac import compare_digest
 
 from fastapi import Request
 from fastapi.responses import JSONResponse, Response
+from fastapi.security import APIKeyHeader
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from app import config
 
 _HEADER = "x-api-key"
+API_KEY_HEADER = APIKeyHeader(
+    name="X-API-Key",
+    auto_error=False,
+    description="Value of API_KEY from the server environment.",
+)
 
 
 def extract_api_key(request: Request) -> str:
@@ -33,8 +39,14 @@ def api_keys_match(provided: str, expected: str) -> bool:
     return compare_digest(left, right)
 
 
+def is_public_path(path: str) -> bool:
+    return path.rstrip("/") in {"/docs", "/redoc", "/openapi.json"} or path == "/docs/oauth2-redirect"
+
+
 class ApiKeyMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next) -> Response:
+        if is_public_path(request.url.path):
+            return await call_next(request)
         expected = config.API_KEY
         if not expected:
             return JSONResponse({"detail": "API key is not configured"}, status_code=503)

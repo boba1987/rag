@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 
 from app.main import create_app
-from tests.api.conftest import AUTH_HEADERS, AuthedClient, TEST_API_KEY
+from tests.api.conftest import AUTH_HEADERS, TEST_API_KEY
 from tests.query.fakes import DEFAULT_SCRIPTED
 
 
@@ -44,13 +44,27 @@ def test_query_accepts_bearer_api_key() -> None:
     assert response.status_code == 200
 
 
-def test_docs_and_openapi_require_api_key() -> None:
+def test_docs_and_openapi_are_public() -> None:
     raw = TestClient(_app())
-    assert raw.get("/docs").status_code == 401
-    assert raw.get("/openapi.json").status_code == 401
-    authed = AuthedClient(_app())
-    assert authed.get("/docs").status_code == 200
-    assert authed.get("/openapi.json").status_code == 200
+    assert raw.get("/docs").status_code == 200
+    spec = raw.get("/openapi.json")
+    assert spec.status_code == 200
+    payload = spec.json()
+    example = payload["components"]["schemas"]["QueryRequest"]["example"]
+    assert example == {
+        "query": "who is better for startups nextiva or dialpad?",
+        "strategy": "rerank",
+    }
+    scheme = payload["components"]["securitySchemes"]["APIKeyHeader"]
+    assert scheme == {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "Value of API_KEY from the server environment.",
+    }
+    assert {"APIKeyHeader": []} in payload["paths"]["/query"]["post"].get("security", [])
+    assert raw.get("/redoc").status_code == 200
+    assert raw.post("/query", json={"query": "Does RingCentral integrate with Salesforce?"}).status_code == 401
 
 
 def test_missing_configured_key_returns_service_unavailable(monkeypatch) -> None:

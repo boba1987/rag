@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Security
 
+from app.api.auth import API_KEY_HEADER
 from app.generation.generator import get_generator
 from app.models.schemas import QueryRequest, QueryResponse, RetrievalFilters, RetrievalStrategy
 from app.workflows.rag_graph import run_rag_graph
 
-router = APIRouter()
+router = APIRouter(dependencies=[Security(API_KEY_HEADER)])
 
 
 def answer_query(
