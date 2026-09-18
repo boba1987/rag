@@ -51,9 +51,36 @@ Generation is grounded in retrieved passages only. The response includes citatio
 
 ### Evaluation and tracing
 
-`evals/golden.json` holds 50 manually written cases (`eval_001`–`eval_050`) for the current corpus, including 25 added comparison questions. `rag-eval --compare` scores dense / sparse / hybrid / rerank (Recall@K, Precision@K, MRR, nDCG, generation metrics). `--compare-chunkers` compares dense retrieval across chunker collections.
+`evals/golden.json` holds 50 manually written cases (`eval_001`–`eval_050`) for the current corpus, including 25 added comparison questions. `rag-eval --compare` scores dense / sparse / hybrid / rerank on the active `CHUNKER` collection. `--compare-chunkers` runs dense retrieval on each chunker collection.
 
 Langfuse records `rag.query`, `query.classify`, `query.rewrite`, `retrieval`, `evidence`, and `generation` / abstain. Rerank is part of the retrieval span, not a separate span.
+
+Latest compare on this golden set (higher recall / MRR / nDCG is better; lower `ms` and `cost` is better):
+
+```text
+variant             recall     mrr    ndcg       ms       cost
+dense                0.927   0.853   0.896   1917.2   0.027881
+sparse               0.875   0.629   0.710   1864.1   0.026804
+hybrid               0.948   0.820   0.876   2175.2   0.027048
+rerank               0.917   0.770   0.830   3480.9   0.028390
+
+variant             recall     mrr    ndcg       ms       cost
+structure_aware      0.927   0.853   0.896   1867.7   0.028090
+fixed_size           0.750   0.697   0.732   2450.5   0.077480
+parent_child         0.729   0.700   0.729   2046.2   0.026943
+```
+
+| Column | Meaning |
+| --- | --- |
+| `recall` | Share of expected documents that appeared in the top-k. Did we find the right article? |
+| `mrr` | How high the first correct document ranked (1.0 = first result). |
+| `ndcg` | Ranking quality across the whole top-k, not just the first hit. |
+| `ms` | Average time per question, in milliseconds. |
+| `cost` | Rough OpenAI spend for that run, not an invoice. |
+
+The first table compares **search methods** on `structure_aware`. **Hybrid** finds the most gold documents (recall 0.948). **Dense** ranks the first correct hit highest (MRR 0.853, nDCG 0.896). Sparse is weaker on ranking. Rerank is slower (~3.5s) and does not beat hybrid or dense here. Use `hybrid` on `/query` if missing the article is worse; use `dense` if the first result being right matters more.
+
+The second table compares **chunkers** with dense search. **`structure_aware` is clearly best**. Fixed-size and parent-child drop recall into the 0.73–0.75 range; fixed-size is also slower and more expensive. Keep `CHUNKER=structure_aware` unless you are re-running `--compare-chunkers`.
 
 ### HTTP API
 
