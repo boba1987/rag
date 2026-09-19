@@ -1,3 +1,5 @@
+from types import SimpleNamespace
+
 from app.config import CHUNKER_NAMES
 from app.ingestion.ingest import main
 
@@ -18,6 +20,12 @@ class _FakeClient:
 
     def create_collection(self, collection_name: str, vectors_config) -> None:
         self.collections[collection_name] = 0
+
+    def get_collection(self, name: str):
+        return SimpleNamespace(payload_schema={})
+
+    def create_payload_index(self, collection_name, field_name, field_schema=None, **kwargs) -> None:
+        return None
 
     def upsert(self, collection_name: str, points, **kwargs) -> None:
         self.collections[collection_name] = self.collections.get(collection_name, 0) + len(points)

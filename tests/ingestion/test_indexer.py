@@ -1,6 +1,15 @@
+from types import SimpleNamespace
+
 from qdrant_client import QdrantClient
 
-from app.ingestion.indexer import chunk_from_payload, chunk_payload, chunk_point_id, upsert_chunks
+from app.ingestion.indexer import (
+    PAYLOAD_KEYWORD_INDEXES,
+    chunk_from_payload,
+    chunk_payload,
+    chunk_point_id,
+    ensure_collection,
+    upsert_chunks,
+)
 from app.models.schemas import Chunk
 
 _CHUNK = Chunk(
@@ -53,9 +62,16 @@ def test_point_id_is_stable() -> None:
 class _RecordingClient:
     def __init__(self) -> None:
         self.sizes: list[int] = []
+        self.indexes: list[str] = []
 
     def collection_exists(self, name: str) -> bool:
         return True
+
+    def get_collection(self, name: str):
+        return SimpleNamespace(payload_schema=dict.fromkeys(self.indexes))
+
+    def create_payload_index(self, collection_name, field_name, field_schema=None, **kwargs) -> None:
+        self.indexes.append(field_name)
 
     def upsert(self, collection_name: str, points, timeout=None) -> None:
         self.sizes.append(len(points))
@@ -68,6 +84,7 @@ def test_upsert_sends_points_in_batches(monkeypatch) -> None:
     client = _RecordingClient()
     assert upsert_chunks(chunks, vectors, 4, client=client, collection="batched") == 5
     assert client.sizes == [2, 2, 1]
+    assert client.indexes == list(PAYLOAD_KEYWORD_INDEXES)
 
 
 def test_qdrant_client_passes_api_key(monkeypatch) -> None:
@@ -107,3 +124,12 @@ def test_upsert_roundtrip_in_memory() -> None:
     assert payload["section"] == "Pricing"
     assert payload["updated_at"] == "2026-09-02 06:31:16"
     assert "Core starts at $15" in payload["text"]
+
+
+def test_ensure_collection_adds_missing_keyword_indexes() -> None:
+    client = _RecordingClient()
+    ensure_collection(client, 4, "existing")
+    assert client.indexes == list(PAYLOAD_KEYWORD_INDEXES)
+
+    ensure_collection(client, 4, "existing")
+    assert client.indexes == list(PAYLOAD_KEYWORD_INDEXES)

@@ -8,7 +8,8 @@ from uuid import NAMESPACE_URL, uuid5
 
 from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import ResponseHandlingException
-from qdrant_client.http.models import Distance, PointStruct, VectorParams
+from qdrant_client.http.models import Distance, PayloadSchemaType, PointStruct, VectorParams
+from qdrant_client.local.qdrant_local import QdrantLocal
 
 from app.config import (
     INDEXED_DIR,
@@ -23,6 +24,8 @@ from app.config import (
 from app.models.schemas import Chunk
 
 _UPSERT_RETRIES = 3
+# Qdrant Cloud rejects payload filters unless these fields have keyword indexes.
+PAYLOAD_KEYWORD_INDEXES = ("provider", "content_type", "document_id")
 
 
 def chunk_point_id(chunk_id: str) -> str:
@@ -58,12 +61,38 @@ def ensure_collection(
     dimensions: int,
     collection: str = QDRANT_COLLECTION,
 ) -> None:
-    if client.collection_exists(collection):
+    if not client.collection_exists(collection):
+        client.create_collection(
+            collection_name=collection,
+            vectors_config=VectorParams(size=dimensions, distance=Distance.COSINE),
+        )
+    ensure_payload_indexes(client, collection)
+
+
+def ensure_payload_indexes(client: QdrantClient, collection: str) -> None:
+    """Create keyword indexes used by metadata filters. Safe to call on existing collections."""
+    if _is_embedded_qdrant(client):
         return
-    client.create_collection(
-        collection_name=collection,
-        vectors_config=VectorParams(size=dimensions, distance=Distance.COSINE),
-    )
+    existing = _payload_index_names(client, collection)
+    for field in PAYLOAD_KEYWORD_INDEXES:
+        if field in existing:
+            continue
+        client.create_payload_index(
+            collection_name=collection,
+            field_name=field,
+            field_schema=PayloadSchemaType.KEYWORD,
+        )
+
+
+def _is_embedded_qdrant(client: QdrantClient) -> bool:
+    inner = getattr(client, "_client", None)
+    return isinstance(inner, QdrantLocal)
+
+
+def _payload_index_names(client: QdrantClient, collection: str) -> set[str]:
+    info = client.get_collection(collection)
+    schema = getattr(info, "payload_schema", None) or {}
+    return set(schema)
 
 
 def chunk_from_payload(payload: dict) -> Chunk:

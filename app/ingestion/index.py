@@ -41,7 +41,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--ensure-collections",
         action="store_true",
-        help="Create one Qdrant collection per chunker and exit",
+        help="Create one Qdrant collection per chunker, including payload indexes, and exit",
     )
     args = parser.parse_args(argv)
 
