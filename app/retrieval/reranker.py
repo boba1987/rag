@@ -11,6 +11,7 @@ from app.config import (
     CROSS_ENCODER_MODEL,
     OPENAI_API_KEY,
     RERANK_CANDIDATES,
+    RERANK_PASSAGE_CHARS,
     RERANK_TOP_K,
     RERANKER_MODEL,
     RERANKER_PROVIDER,
@@ -18,9 +19,15 @@ from app.config import (
 from app.models.schemas import RetrievalFilters, RetrievedChunk
 
 _TOKEN_RE = re.compile(r"[a-z0-9$]+")
-_PASSAGE_CHARS = 500
+# Must cover a whole chunk. Truncating hides evidence that sits past the intro
+# and the reranker then demotes chunks the dense retriever ranked correctly.
+_PASSAGE_CHARS = RERANK_PASSAGE_CHARS
 _OPENAI_SYSTEM = (
     "Rank passages for answering the question. "
+    "Each passage is formatted as 'index. title / section: text'. "
+    "When the question names its source, such as a specific article or a provider page, "
+    "passages carrying that title outrank passages from other sources, "
+    "even when those answer the question more fully. "
     "Reply with JSON: {\"order\": [best_index, ...]} using each passage index exactly once. "
     "Do not invent passages."
 )

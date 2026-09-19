@@ -80,6 +80,8 @@ parent_child         0.729   0.700   0.729   2046.2   0.026943
 
 The first table compares **search methods** on `structure_aware`. **Hybrid** finds the most gold documents (recall 0.948). **Dense** ranks the first correct hit highest (MRR 0.853, nDCG 0.896). Sparse is weaker on ranking. Rerank is slower (~3.5s) and does not beat hybrid or dense here. Use `hybrid` on `/query` if missing the article is worse; use `dense` if the first result being right matters more.
 
+> The rerank row above is superseded. See [Update — September 19, 2026](#update--september-19-2026).
+
 The second table compares **chunkers** with dense search. **`structure_aware` is clearly best**. Fixed-size and parent-child drop recall into the 0.73–0.75 range; fixed-size is also slower and more expensive. Keep `CHUNKER=structure_aware` unless you are re-running `--compare-chunkers`.
 
 ### HTTP API
@@ -317,11 +319,12 @@ Used by `python -m app.ingestion.export_fixtures` (not by the API):
 | `QUERY_REWRITER` | `openai` or `heuristic` | `openai` |
 | `QUERY_REWRITER_MODEL` | Rewrite model | same as `QUERY_EXTRACTOR_MODEL` |
 | `RERANKER` | Reranker backend | `openai` |
-| `RERANKER_MODEL` | Rerank model | same as `QUERY_EXTRACTOR_MODEL` |
+| `RERANKER_MODEL` | Rerank model | `gpt-4.1-mini` |
 | `DENSE_TOP_K` | Dense / hybrid cutoff | `5` |
 | `RRF_K` | RRF constant | `60` |
 | `RERANK_CANDIDATES` | Hybrid pool before rerank | `20` |
 | `RERANK_TOP_K` | Results after rerank | `5` |
+| `RERANK_PASSAGE_CHARS` | Characters of each candidate the reranker sees | `2000` |
 | `EVIDENCE_CHECKER` | `heuristic` or `openai` | `heuristic` |
 | `EVIDENCE_MIN_OVERLAP` | Minimum overlap to accept evidence | `0.3` |
 | `EMBEDDER` / `GENERATOR` | Embedding and generation provider | `openai` |
@@ -343,3 +346,36 @@ If both keys are set, traces are sent. Omit them to run without tracing.
 | --- | --- |
 | `RUN_LIVE_RAG=1` | Enable live Qdrant + OpenAI tests in `tests/api/test_live_query.py` |
 | `OPENAI_EMBED_USD_PER_1M`, `OPENAI_INPUT_USD_PER_1M`, `OPENAI_OUTPUT_USD_PER_1M` | Rough eval cost estimates, not invoices |
+
+## Update — September 19, 2026
+
+Reranking was the weakest strategy in the original compare: it scored below plain hybrid on every retrieval metric while costing the most time. Three fixes in `app/retrieval/reranker.py` and `app/config.py` turned it into the best strategy on the golden set.
+
+`python -m app.evaluation.run --compare`, 50 cases, `CHUNKER=structure_aware`, generation enabled:
+
+```text
+variant             recall     mrr    ndcg       ms       cost
+dense                0.927   0.853   0.896   1875.1   0.028143
+sparse               0.875   0.629   0.710   1643.4   0.026710
+hybrid               0.948   0.820   0.876   1946.2   0.027024
+rerank               0.969   0.847   0.903   3164.9   0.031023
+```
+
+Dense, sparse, and hybrid are unchanged on recall / MRR / nDCG, so every difference from the earlier table belongs to the reranker:
+
+| variant | recall | MRR | nDCG |
+| --- | --- | --- | --- |
+| rerank, before | 0.917 | 0.770 | 0.830 |
+| rerank, after | **0.969** | **0.847** | **0.903** |
+
+### What changed
+
+**The reranker only saw the first 500 characters of each candidate.** Chunks run to several thousand characters, so roughly 60% of them were truncated and the model was ordering passages by their opening paragraph while the generator answered from the full text. In one traced case the gold chunk's visible window discussed analytics and workforce optimization and contained no prices at all, so the reranker demoted it on a pricing question — a document hybrid had already placed in its top 5. The window is now `RERANK_PASSAGE_CHARS`, default 2000.
+
+**The reranker model was `gpt-4.1-nano`.** Listwise permutation over 20 candidates is past what the nano tier does reliably, which is why it was reordering RRF output into something worse. `RERANKER_MODEL` now defaults to `gpt-4.1-mini`. This was the single largest contributor, worth roughly +0.03 to +0.05 on each metric against about +0.02 from the other two changes combined.
+
+**The rerank prompt ignored the source named in the question.** Many golden cases scope the answer to a specific article or provider page, and the prompt only asked the model to rank by how well a passage answers the question. It would promote a topically better passage from the wrong document. The prompt now states that a source named in the question outranks passages from elsewhere.
+
+### Caveats
+
+Rerank costs about 3.2s per question against hybrid's 1.9s, so the quality is real but not free. The `cost` column also still excludes the rerank call entirely — `estimate_cost_usd` counts only the question embedding and the generation tokens — and that gap widened, since `gpt-4.1-mini` costs more per token than nano and untruncated passages made each rerank prompt larger.

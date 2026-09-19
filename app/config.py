@@ -87,8 +87,13 @@ DENSE_TOP_K = int(os.getenv("DENSE_TOP_K", "5"))
 RRF_K = int(os.getenv("RRF_K", "60"))
 RERANK_CANDIDATES = int(os.getenv("RERANK_CANDIDATES", "20"))
 RERANK_TOP_K = int(os.getenv("RERANK_TOP_K", "5"))
+# Golden-set recall plateaus here; 3000 and 6000 score the same for a larger prompt.
+# Below ~1000 the reranker ranks on intros alone and falls behind plain hybrid.
+RERANK_PASSAGE_CHARS = int(os.getenv("RERANK_PASSAGE_CHARS", "2000"))
 RERANKER_PROVIDER = os.getenv("RERANKER", "openai")
-RERANKER_MODEL = os.getenv("RERANKER_MODEL", QUERY_EXTRACTOR_MODEL)
+# Listwise ranking over RERANK_CANDIDATES passages needs more than the nano tier;
+# nano ranks below plain hybrid on the golden set.
+RERANKER_MODEL = os.getenv("RERANKER_MODEL", "gpt-4.1-mini")
 CROSS_ENCODER_MODEL = os.getenv(
     "CROSS_ENCODER_MODEL",
     "cross-encoder/ms-marco-MiniLM-L-6-v2",
