@@ -112,6 +112,16 @@ def test_constrain_drops_unknown_names() -> None:
     assert constrained.topics == []
 
 
+def test_constrain_drops_technology_term_not_in_catalog() -> None:
+    constrained = constrain_extraction(
+        QueryExtraction(kind="factual", providers=["VoIP"], topics=["VoIP"], source="openai"),
+        _catalog(),
+        "what is voip?",
+    )
+    assert constrained.providers == []
+    assert constrained.kind == "factual"
+
+
 def test_constrain_does_not_substitute_a_catalog_provider() -> None:
     constrained = constrain_extraction(
         QueryExtraction(kind="pricing", providers=["Nextiva"], topics=["pricing"], source="openai"),

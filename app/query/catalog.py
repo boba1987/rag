@@ -8,9 +8,7 @@ from pathlib import Path
 from app.config import NORMALIZED_DIR, QDRANT_COLLECTION
 from app.models.schemas import NormalizedDocument
 
-_VS = re.compile(r"\s+vs\.?\s+", re.IGNORECASE)
 _CAMEL = re.compile(r"([a-z])([A-Z])")
-_TITLE_SKIP = {"how", "the", "a", "an", "what", "who", "why"}
 
 
 @dataclass(frozen=True)
@@ -95,7 +93,6 @@ def catalog_from_qdrant(client=None, collection: str | None = None) -> QueryCata
             if payload.get("provider"):
                 providers.add(str(payload["provider"]))
             title = str(payload.get("title") or "")
-            providers.update(_providers_from_title(title))
             section = str(payload.get("section") or "")
             if section:
                 headings.append(section)
@@ -118,7 +115,6 @@ def catalog_from_normalized(normalized_dir: Path) -> QueryCatalog:
         document = NormalizedDocument.model_validate_json(path.read_text())
         if document.provider:
             providers.add(document.provider)
-        providers.update(_providers_from_title(document.title))
         parts.append(document.title)
         for section in document.sections:
             if section.heading:
@@ -144,27 +140,6 @@ def _build_catalog(
         headings=headings,
         corpus=corpus,
     )
-
-
-def _providers_from_title(title: str) -> list[str]:
-    if not _VS.search(title):
-        return []
-    names: list[str] = []
-    for part in _VS.split(title):
-        words = part.split(":")[0].split(",")[0].strip().split()
-        if len(words) != 1 or words[0].lower() in _TITLE_SKIP:
-            return []
-        name = words[0]
-        if not _looks_like_provider(name):
-            return []
-        names.append(name)
-    return names if len(names) >= 2 else []
-
-
-def _looks_like_provider(name: str) -> bool:
-    if any(char.isdigit() for char in name):
-        return len(name) >= 2
-    return name[0].isupper() and name.isalpha() and len(name) >= 3
 
 
 @lru_cache(maxsize=1)

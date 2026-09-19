@@ -16,7 +16,7 @@ class _FakeQdrant:
         return self._points, None
 
 
-def test_load_catalog_from_normalized_uses_provider_and_vs_title(tmp_path: Path) -> None:
+def test_load_catalog_from_normalized_uses_payload_provider_only(tmp_path: Path) -> None:
     (tmp_path / "provider-1.json").write_text(
         """
         {
@@ -44,32 +44,33 @@ def test_load_catalog_from_normalized_uses_provider_and_vs_title(tmp_path: Path)
         """
     )
     catalog = load_catalog(normalized_dir=tmp_path)
-    assert catalog.providers == ("Dialpad", "Five9", "RingCentral")
+    assert catalog.providers == ("RingCentral",)
     assert "Plans and Pricing" in catalog.headings
-    assert catalog.match_providers("ring central vs five9") == ["RingCentral", "Five9"]
+    assert catalog.match_providers("ring central vs five9") == ["RingCentral"]
     assert catalog.allows_topic("pricing")
     assert catalog.allows_topic("Salesforce integration")
 
 
-def test_multi_word_vs_title_is_not_a_provider(tmp_path: Path) -> None:
+def test_technology_vs_title_is_not_a_provider(tmp_path: Path) -> None:
     (tmp_path / "article.json").write_text(
         """
         {
           "id": "3",
-          "title": "AI Receptionist vs Human Receptionist",
+          "title": "VoIP vs Landline: What’s the Difference",
           "content_type": "article",
           "provider": null,
           "sections": [
-            {"heading": "Overview", "heading_path": ["Overview"], "text": "Compare options."}
+            {"heading": "What is VoIP?", "heading_path": ["What is VoIP?"], "text": "Voice over Internet Protocol."}
           ]
         }
         """
     )
     catalog = load_catalog(normalized_dir=tmp_path)
     assert catalog.providers == ()
+    assert catalog.match_providers("what is voip?") == []
 
 
-def test_catalog_from_qdrant_uses_payload_provider_and_vs_title() -> None:
+def test_catalog_from_qdrant_uses_payload_provider_only() -> None:
     catalog = catalog_from_qdrant(
         client=_FakeQdrant(
             [
@@ -81,16 +82,17 @@ def test_catalog_from_qdrant_uses_payload_provider_and_vs_title() -> None:
                 },
                 {
                     "provider": None,
-                    "title": "Five9 vs Dialpad: How the Two Platforms Stack Up",
-                    "section": "Overview",
-                    "text": "Feature comparison.",
+                    "title": "VoIP vs Landline: What’s the Difference",
+                    "section": "What is VoIP?",
+                    "text": "Voice over Internet Protocol.",
                 },
             ]
         )
     )
-    assert catalog.providers == ("Dialpad", "Five9", "Nextiva")
+    assert catalog.providers == ("Nextiva",)
     assert catalog.match_providers("How much does Nextiva cost?") == ["Nextiva"]
-    assert "Pricing" in catalog.headings
+    assert catalog.match_providers("what is voip?") == []
+    assert "What is VoIP?" in catalog.headings
 
 
 def test_unknown_name_is_not_a_provider() -> None:

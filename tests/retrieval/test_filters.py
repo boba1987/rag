@@ -91,6 +91,15 @@ def test_two_catalog_providers_do_not_force_a_single_filter() -> None:
     assert filters.content_type is None
 
 
+def test_technology_term_is_not_a_provider_filter() -> None:
+    filters = infer_filters(
+        "what is voip?",
+        QueryExtraction(kind="factual", providers=[], topics=["VoIP"], source="openai"),
+    )
+    assert filters.provider is None
+    assert filters.content_type is None
+
+
 def test_pricing_without_catalog_provider_does_not_restrict_content_type() -> None:
     filters = infer_filters(
         "what is NICE CXone pricing?",
