@@ -322,6 +322,7 @@ Used by `python -m app.ingestion.export_fixtures` (not by the API):
 | `RRF_K` | RRF constant | `60` |
 | `RERANK_CANDIDATES` | Hybrid pool before rerank | `20` |
 | `RERANK_TOP_K` | Results after rerank | `5` |
+| `RERANK_PASSAGE_CHARS` | Characters per passage in the rerank prompt | `1000` |
 | `EVIDENCE_CHECKER` | `heuristic` or `openai` | `heuristic` |
 | `EVIDENCE_MIN_OVERLAP` | Minimum overlap to accept evidence | `0.3` |
 | `EMBEDDER` / `GENERATOR` | Embedding and generation provider | `openai` |

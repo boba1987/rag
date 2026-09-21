@@ -87,6 +87,7 @@ DENSE_TOP_K = int(os.getenv("DENSE_TOP_K", "5"))
 RRF_K = int(os.getenv("RRF_K", "60"))
 RERANK_CANDIDATES = int(os.getenv("RERANK_CANDIDATES", "20"))
 RERANK_TOP_K = int(os.getenv("RERANK_TOP_K", "5"))
+RERANK_PASSAGE_CHARS = int(os.getenv("RERANK_PASSAGE_CHARS", "1000"))
 RERANKER_PROVIDER = os.getenv("RERANKER", "openai")
 RERANKER_MODEL = os.getenv("RERANKER_MODEL", QUERY_EXTRACTOR_MODEL)
 CROSS_ENCODER_MODEL = os.getenv(
