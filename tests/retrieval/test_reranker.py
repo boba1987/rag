@@ -3,6 +3,8 @@ import pytest
 from app.models.schemas import RetrievedChunk
 from types import SimpleNamespace
 
+from app.config import RERANK_PASSAGE_CHARS
+from app.observability.tracing import RecordingTracer, reset_tracer
 from app.retrieval.reranker import (
     BGEReranker,
     CrossEncoderReranker,
@@ -121,6 +123,86 @@ def test_openai_reranker_orders_by_model_indices() -> None:
     )
     assert [chunk.id for chunk in ranked] == ["salesforce", "pricing"]
     assert ranked[0].score > ranked[1].score
+
+
+class _PromptCapturingClient:
+    def __init__(self) -> None:
+        self.chat = SimpleNamespace(completions=self)
+        self.prompts: list[str] = []
+
+    def create(self, **kwargs):
+        self.prompts.append(kwargs["messages"][-1]["content"])
+        return SimpleNamespace(
+            choices=[SimpleNamespace(message=SimpleNamespace(content='{"order": [0]}'))]
+        )
+
+
+def test_passage_chars_truncates_the_prompt() -> None:
+    client = _PromptCapturingClient()
+    OpenAIReranker(client=client, top_k=1, passage_chars=10).rerank(
+        "query",
+        [_chunk("long", "x" * 500)],
+    )
+    assert "x" * 10 in client.prompts[0]
+    assert "x" * 11 not in client.prompts[0]
+
+
+def test_passage_chars_defaults_to_the_configured_value() -> None:
+    client = _PromptCapturingClient()
+    text = "x" * (RERANK_PASSAGE_CHARS + 100)
+    OpenAIReranker(client=client, top_k=1).rerank("query", [_chunk("long", text)])
+    assert "x" * RERANK_PASSAGE_CHARS in client.prompts[0]
+    assert "x" * (RERANK_PASSAGE_CHARS + 1) not in client.prompts[0]
+
+
+def test_rerank_llm_span_records_model_and_usage() -> None:
+    class _Client:
+        def __init__(self) -> None:
+            self.chat = SimpleNamespace(completions=self)
+
+        def create(self, **kwargs):
+            return SimpleNamespace(
+                choices=[SimpleNamespace(message=SimpleNamespace(content='{"order": [1, 0]}'))],
+                usage=SimpleNamespace(prompt_tokens=120, completion_tokens=8, total_tokens=128),
+            )
+
+    recorder = RecordingTracer()
+    reset_tracer(recorder)
+    try:
+        OpenAIReranker(client=_Client(), model="gpt-test", top_k=2).rerank(
+            "query",
+            [_chunk("a", "alpha"), _chunk("b", "beta")],
+        )
+    finally:
+        reset_tracer(None)
+    llm = next(item for item in recorder.spans if item.name == "rerank.llm")
+    assert llm.as_type == "generation"
+    assert llm.model == "gpt-test"
+    assert llm.metadata["usage"] == {"input": 120, "output": 8, "total": 128}
+    assert llm.output["order"] == [1, 0]
+
+
+def test_rerank_llm_span_marks_lexical_fallback() -> None:
+    class _Client:
+        def __init__(self) -> None:
+            self.chat = SimpleNamespace(completions=self)
+
+        def create(self, **kwargs):
+            raise RuntimeError("boom")
+
+    recorder = RecordingTracer()
+    reset_tracer(recorder)
+    try:
+        ranked = OpenAIReranker(client=_Client(), top_k=2).rerank(
+            "query",
+            [_chunk("a", "alpha")],
+        )
+    finally:
+        reset_tracer(None)
+    llm = next(item for item in recorder.spans if item.name == "rerank.llm")
+    assert llm.metadata["fallback"] is True
+    assert llm.output["fallback"] == "lexical"
+    assert [chunk.id for chunk in ranked] == ["a"]
 
 
 def test_openai_reranker_falls_back_to_lexical_on_bad_json() -> None:

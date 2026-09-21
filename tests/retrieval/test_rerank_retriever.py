@@ -1,4 +1,5 @@
 from app.models.schemas import RetrievalFilters, RetrievedChunk
+from app.observability.tracing import RecordingTracer, reset_tracer
 from app.retrieval.reranker import RerankRetriever
 
 
@@ -64,6 +65,26 @@ def test_forwards_filters_and_infer() -> None:
         {"query": "Salesforce", "top_k": 20, "filters": filters, "infer": True}
     ]
     assert reranker.calls[0]["top_k"] == 4
+
+
+def test_rerank_span_reports_pool_and_selection() -> None:
+    recorder = RecordingTracer()
+    reset_tracer(recorder)
+    try:
+        pipeline = RerankRetriever(
+            retriever=_FixedRetriever([_chunk("a"), _chunk("b"), _chunk("c")]),
+            reranker=_FixedReranker(),
+            candidates=3,
+            top_k=2,
+        )
+        pipeline.search("Salesforce")
+    finally:
+        reset_tracer(None)
+    rerank = next(item for item in recorder.spans if item.name == "rerank")
+    assert rerank.input["pool_ids"] == ["a", "b", "c"]
+    assert rerank.output["chunk_ids"] == ["c", "b"]
+    assert rerank.output["dropped"] == 1
+    assert rerank.metadata["candidates"] == 3
 
 
 def test_empty_pool_returns_empty() -> None:

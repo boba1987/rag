@@ -11,14 +11,15 @@ from app.config import (
     CROSS_ENCODER_MODEL,
     OPENAI_API_KEY,
     RERANK_CANDIDATES,
+    RERANK_PASSAGE_CHARS,
     RERANK_TOP_K,
     RERANKER_MODEL,
     RERANKER_PROVIDER,
 )
 from app.models.schemas import RetrievalFilters, RetrievedChunk
+from app.observability.tracing import span
 
 _TOKEN_RE = re.compile(r"[a-z0-9$]+")
-_PASSAGE_CHARS = 500
 _OPENAI_SYSTEM = (
     "Rank passages for answering the question. "
     "Reply with JSON: {\"order\": [best_index, ...]} using each passage index exactly once. "
@@ -126,6 +127,7 @@ class OpenAIReranker(Reranker):
         model: str = RERANKER_MODEL,
         api_key: str | None = OPENAI_API_KEY,
         top_k: int = RERANK_TOP_K,
+        passage_chars: int = RERANK_PASSAGE_CHARS,
     ) -> None:
         if client is None:
             if not api_key:
@@ -134,7 +136,12 @@ class OpenAIReranker(Reranker):
         self._client = client
         self._model = model
         self._top_k = top_k
+        self._passage_chars = passage_chars
         self._fallback = LexicalReranker(top_k=top_k)
+
+    @property
+    def model(self) -> str:
+        return self._model
 
     def rerank(
         self,
@@ -145,10 +152,22 @@ class OpenAIReranker(Reranker):
         if not chunks:
             return []
         limit = top_k or self._top_k
-        try:
-            order = self._rank(query, chunks)
-        except Exception:
-            return self._fallback.rerank(query, chunks, top_k=limit)
+        with span(
+            "rerank.llm",
+            as_type="generation",
+            model=self._model,
+            input={"query": query, "passages": len(chunks)},
+            metadata={"passage_chars": self._passage_chars, "top_k": limit},
+        ) as llm_span:
+            try:
+                order = self._rank(query, chunks, llm_span)
+            except Exception as error:
+                llm_span.update(
+                    output={"fallback": "lexical", "error": str(error)},
+                    metadata={"fallback": True},
+                )
+                return self._fallback.rerank(query, chunks, top_k=limit)
+            llm_span.update(output={"order": order})
         ranked = _apply_order(chunks, order)
         total = max(len(ranked), 1)
         return [
@@ -156,8 +175,8 @@ class OpenAIReranker(Reranker):
             for index, chunk in enumerate(ranked[:limit])
         ]
 
-    def _rank(self, query: str, chunks: list[RetrievedChunk]) -> list[int]:
-        payload = json.loads(self._complete(query, chunks))
+    def _rank(self, query: str, chunks: list[RetrievedChunk], observation=None) -> list[int]:
+        payload = json.loads(self._complete(query, chunks, observation))
         raw = payload.get("order") if isinstance(payload, dict) else payload
         if not isinstance(raw, list):
             raise ValueError("rerank response missing order")
@@ -170,9 +189,9 @@ class OpenAIReranker(Reranker):
             raise ValueError("rerank response had no valid indices")
         return order
 
-    def _complete(self, query: str, chunks: list[RetrievedChunk]) -> str:
+    def _complete(self, query: str, chunks: list[RetrievedChunk], observation=None) -> str:
         passages = "\n".join(
-            f"{index}. {chunk.title} / {chunk.section}: {chunk.text[:_PASSAGE_CHARS]}"
+            f"{index}. {chunk.title} / {chunk.section}: {chunk.text[:self._passage_chars]}"
             for index, chunk in enumerate(chunks)
         )
         response = self._client.chat.completions.create(
@@ -187,7 +206,23 @@ class OpenAIReranker(Reranker):
                 },
             ],
         )
+        if observation is not None:
+            _record_usage(observation, getattr(response, "usage", None))
         return (response.choices[0].message.content or "").strip()
+
+
+def _record_usage(observation, usage) -> None:
+    """Report OpenAI token counts so the rerank call shows real cost in Langfuse."""
+    if usage is None:
+        return
+    details = {
+        "input": getattr(usage, "prompt_tokens", None),
+        "output": getattr(usage, "completion_tokens", None),
+        "total": getattr(usage, "total_tokens", None),
+    }
+    details = {key: value for key, value in details.items() if value is not None}
+    if details:
+        observation.update(usage_details=details, metadata={"usage": details})
 
 
 def _apply_order(chunks: list[RetrievedChunk], order: list[int]) -> list[RetrievedChunk]:
@@ -250,4 +285,23 @@ class RerankRetriever:
         pool = searcher.search(
             query, top_k=self._candidates, filters=filters, infer=infer
         )
-        return self._reranker.rerank(query, pool, top_k=limit)
+        with span(
+            "rerank",
+            input={"query": query, "pool_ids": [chunk.id for chunk in pool]},
+            metadata={
+                "reranker": type(self._reranker).__name__,
+                "candidates": self._candidates,
+                "top_k": limit,
+            },
+            model=getattr(self._reranker, "model", None),
+        ) as rerank_span:
+            ranked = self._reranker.rerank(query, pool, top_k=limit)
+            rerank_span.update(
+                output={
+                    "chunk_ids": [chunk.id for chunk in ranked],
+                    "document_ids": [chunk.document_id for chunk in ranked],
+                    "kept": len(ranked),
+                    "dropped": max(len(pool) - len(ranked), 0),
+                }
+            )
+        return ranked

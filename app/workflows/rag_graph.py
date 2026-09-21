@@ -99,15 +99,7 @@ def retrieve(state: RagState) -> dict:
                 "scores": [chunk.score for chunk in corrected.chunks],
                 "retried": corrected.retried,
                 "retry_queries": corrected.retry_queries,
-            }
-        )
-    with span("evidence.check", input={"query": state["question"]}) as evidence_span:
-        evidence_span.update(
-            output={
                 "sufficient": corrected.verdict.sufficient,
-                "reason": corrected.verdict.reason,
-                "overlap": corrected.verdict.overlap,
-                "retried": corrected.retried,
             }
         )
     return {"corrected": corrected}

@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 
 from app.config import DENSE_TOP_K
 from app.models.schemas import RetrievalFilters, RetrievedChunk
+from app.observability.tracing import span
 from app.query.catalog import QueryCatalog
 from app.query.evidence import EvidenceChecker, EvidenceVerdict, check_evidence
 from app.query.extractor import QueryExtraction
@@ -53,8 +54,8 @@ def retrieve_with_correction(
     catalog: QueryCatalog | None = None,
 ) -> CorrectiveRetrieval:
     """Retrieve once; if evidence is thin, rewrite, drop the section filter, and retrieve again."""
-    chunks = run_searches(searcher, queries, filters)
-    verdict = check_evidence(question, chunks, checker=checker)
+    chunks = _traced_search("retrieval.attempt", searcher, queries, filters)
+    verdict = _traced_check(question, chunks, checker, attempt=1)
     if verdict.sufficient:
         return CorrectiveRetrieval(
             chunks=chunks,
@@ -70,8 +71,8 @@ def retrieve_with_correction(
         catalog=catalog,
     )
     retry_filters = broaden_filters(filters)
-    retry_chunks = run_searches(searcher, retry_queries, retry_filters)
-    retry_verdict = check_evidence(question, retry_chunks, checker=checker)
+    retry_chunks = _traced_search("retrieval.retry", searcher, retry_queries, retry_filters)
+    retry_verdict = _traced_check(question, retry_chunks, checker, attempt=2)
     return CorrectiveRetrieval(
         chunks=retry_chunks,
         verdict=retry_verdict,
@@ -80,6 +81,46 @@ def retrieve_with_correction(
         filters=retry_filters,
         retry_queries=retry_queries,
     )
+
+
+def _traced_search(
+    name: str,
+    searcher,
+    queries: list[str],
+    filters: RetrievalFilters | None,
+) -> list[RetrievedChunk]:
+    with span(
+        name,
+        input={
+            "queries": queries,
+            "filters": filters.model_dump(exclude_none=True) if filters else None,
+        },
+    ) as search_span:
+        chunks = run_searches(searcher, queries, filters)
+        search_span.update(
+            output={
+                "chunk_ids": [chunk.id for chunk in chunks],
+                "document_ids": [chunk.document_id for chunk in chunks],
+                "scores": [chunk.score for chunk in chunks],
+            }
+        )
+    return chunks
+
+
+def _traced_check(
+    question: str,
+    chunks: list[RetrievedChunk],
+    checker: EvidenceChecker | None,
+    attempt: int,
+) -> EvidenceVerdict:
+    with span(
+        "evidence.check",
+        input={"query": question, "chunks": len(chunks)},
+        metadata={"attempt": attempt},
+    ) as check_span:
+        verdict = check_evidence(question, chunks, checker=checker)
+        check_span.update(output=verdict.model_dump())
+    return verdict
 
 
 def run_searches(searcher, queries: list[str], filters: RetrievalFilters | None):

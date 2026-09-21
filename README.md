@@ -53,7 +53,7 @@ Generation is grounded in retrieved passages only. The response includes citatio
 
 `evals/golden.json` holds 50 manually written cases (`eval_001`–`eval_050`) for the current corpus, including 25 added comparison questions. `rag-eval --compare` scores dense / sparse / hybrid / rerank on the active `CHUNKER` collection. `--compare-chunkers` runs dense retrieval on each chunker collection.
 
-Langfuse records `rag.query`, `query.classify`, `query.rewrite`, `retrieval`, `evidence`, and `generation` / abstain. Rerank is part of the retrieval span, not a separate span.
+Langfuse records `rag.query` → `query.classify`, `query.rewrite`, `retrieval`, `generation` / `abstain`. Inside `retrieval` each pass is its own span: `retrieval.attempt`, its `evidence.check` (`attempt: 1`), and on a corrective retry `retrieval.retry` plus a second `evidence.check` (`attempt: 2`). With `strategy=rerank`, a `rerank` span records the candidate pool and the selected chunks, and the listwise LLM call is a nested `rerank.llm` generation carrying its model and token usage.
 
 Latest compare on this golden set (higher recall / MRR / nDCG is better; lower `ms` and `cost` is better):
 

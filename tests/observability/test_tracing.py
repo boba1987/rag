@@ -35,13 +35,16 @@ def test_graph_records_query_spans(tracer: RecordingTracer) -> None:
         "query.classify",
         "query.rewrite",
         "retrieval",
+        "retrieval.attempt",
         "evidence.check",
         "generation",
     ]
     assert tracer.spans[0].output["answer"] == result.answer
     assert tracer.spans[3].metadata["strategy"] == "dense"
-    assert tracer.spans[4].output["sufficient"] is True
-    assert tracer.spans[5].as_type == "generation"
+    assert tracer.spans[4].output["chunk_ids"]
+    assert tracer.spans[5].metadata["attempt"] == 1
+    assert tracer.spans[5].output["sufficient"] is True
+    assert tracer.spans[6].as_type == "generation"
     assert tracer.flushed is True
 
 
@@ -58,3 +61,23 @@ def test_graph_records_abstain_span(tracer: RecordingTracer) -> None:
     assert "generation" not in names
     assert tracer.spans[-1].name == "abstain" or names[-1] == "rag.query"
     assert any(item.name == "evidence.check" and item.output["sufficient"] is False for item in tracer.spans)
+
+
+def test_retry_records_both_attempts(tracer: RecordingTracer) -> None:
+    run_rag_graph(
+        "What is Zoom Phone's 2020 revenue?",
+        retriever=_EmptyRetriever(),
+        generator=_BoomGenerator(),
+        extractor=DEFAULT_SCRIPTED,
+        infer=False,
+    )
+    names = [item.name for item in tracer.spans]
+    assert "retrieval.attempt" in names
+    assert "retrieval.retry" in names
+    attempts = [item.metadata["attempt"] for item in tracer.spans if item.name == "evidence.check"]
+    assert attempts == [1, 2]
+    retry = next(item for item in tracer.spans if item.name == "retrieval.retry")
+    first = next(item for item in tracer.spans if item.name == "retrieval.attempt")
+    assert retry.input["queries"] != first.input["queries"]
+    retrieval = next(item for item in tracer.spans if item.name == "retrieval")
+    assert retrieval.output["retried"] is True
